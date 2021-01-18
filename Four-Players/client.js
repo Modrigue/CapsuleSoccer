@@ -1,4 +1,7 @@
-const socket = io.connect('http://localhost:5500');
+const DEPLOY = false;
+
+const PORT = DEPLOY ? 13000 : 5500;
+const socket = io.connect(`http://localhost:${PORT}`);
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');

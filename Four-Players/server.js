@@ -1,3 +1,6 @@
+const DEPLOY = false;
+const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
+
 // pad paremeters
 const PAD_ANGLE_FRICTION = 0.05;
 const PAD_ANGLE_KEY_FORCE = 0.08;
@@ -841,11 +844,26 @@ function renderOnly(){
 
 //************************* END OF PHYSICS ENGINE ***/
 
-const express = require('express')
-const app = express()
-const io = require('socket.io')(5500)
-
-app.get('/', (req, res) => res.send('Hello World!'))
+const express = require('express');
+const app = express();
+let io;
+if (DEPLOY)
+{
+    app.use(express.static('.'));
+    http = require('http').Server(app);
+    io = require('socket.io')(http);
+    
+    app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
+    
+    http.listen(PORT, function(){
+        console.log(`listening on port ${PORT}...`);
+    })
+}
+else
+{
+    io = require('socket.io')(PORT)
+    app.get('/', (req, res) => res.send('Hello World!'))
+}
 
 buildStadium();
 let playerReg = {};
