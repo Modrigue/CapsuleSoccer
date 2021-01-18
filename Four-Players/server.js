@@ -884,6 +884,7 @@ function connected(socket){
         serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
         serverBalls[socket.id].score = 0;
         serverBalls[socket.id].no = 2;
+        serverBalls[socket.id].angle = 0; // face left
         serverBalls[socket.id].layer = roomNo;
         playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 2};
         football[roomNo] = new Ball(320, 270, 20, 6);
