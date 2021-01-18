@@ -27,7 +27,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
         if(clientBalls[player.id].no === 1){
-            clientBalls[player.id].color = "lightblue";
+            clientBalls[player.id].color = "Salmon";
         } else if(clientBalls[player.id].no === 2){
             clientBalls[player.id].color = "lightgreen";
         }
@@ -55,7 +55,7 @@ socket.on('playerName', data => {
 socket.on('updateFootball', footballPos => {
     if(football === undefined){
         football = new Ball(footballPos.x, footballPos.y, 20, 10);
-        football.color = "red";
+        football.color = "blue";
     } else {
         football.setPosition(footballPos.x, footballPos.y);
     }
@@ -99,7 +99,7 @@ function userInterface(){
     ctx.font = "30px Arial";
     for (let id in clientBalls){
         if(clientBalls[id].no === 1){
-            ctx.fillStyle = "blue";
+            ctx.fillStyle = "red";
             ctx.textAlign = "left";
             ctx.fillText(clientBalls[id].score, 30, 30);
             if(clientBalls[id].name){
