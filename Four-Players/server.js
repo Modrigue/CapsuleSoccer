@@ -1,3 +1,9 @@
+// pad paremeters
+const PAD_ANGLE_FRICTION = 0.05;
+const PAD_ANGLE_KEY_FORCE = 0.08;
+const PAD_WIDTH = 25;
+const PAD_MASS = 10;
+
 const BODIES = [];
 const COLLISIONS = [];
 
@@ -857,10 +863,10 @@ function connected(socket){
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
     if (clientNo % 2 === 1){
         //creating player 1
-        serverBalls[socket.id] = new Capsule(80, 270, 150, 270, 25, 10);
+        serverBalls[socket.id] = new Capsule(80, 270, 150, 270, PAD_WIDTH, PAD_MASS);
         serverBalls[socket.id].maxSpeed = 4;
-        serverBalls[socket.id].angFriction = 0.01;
-        serverBalls[socket.id].angKeyForce = 0.08;
+        serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+        serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
         serverBalls[socket.id].score = 0;
         serverBalls[socket.id].no = 1;
         serverBalls[socket.id].layer = roomNo;
@@ -868,10 +874,10 @@ function connected(socket){
     }
     else if (clientNo % 2 === 0){
         //creating player 2
-        serverBalls[socket.id] = new Capsule(560, 270, 490, 270, 25, 10);
+        serverBalls[socket.id] = new Capsule(560, 270, 490, 270, PAD_WIDTH, PAD_MASS);
         serverBalls[socket.id].maxSpeed = 4;
-        serverBalls[socket.id].angFriction = 0.01;
-        serverBalls[socket.id].angKeyForce = 0.08;
+        serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+        serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
         serverBalls[socket.id].score = 0;
         serverBalls[socket.id].no = 2;
         serverBalls[socket.id].layer = roomNo;
