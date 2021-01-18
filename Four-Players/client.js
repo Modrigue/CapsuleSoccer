@@ -6,6 +6,8 @@ const ctx = canvas.getContext('2d');
 const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
+const PAD_LENGTH = 50;
+
 buildStadium();
 let football;
 let clientBalls = {};
@@ -19,7 +21,7 @@ socket.on('updateConnections', player => {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     if(clientBalls[player.id] === undefined){
-        clientBalls[player.id] = new Capsule(player.x+35, player.y, player.x-35, player.y, 25, 10);
+        clientBalls[player.id] = new Capsule(player.x + PAD_LENGTH/2, player.y, player.x - PAD_LENGTH/2, player.y, 25, 10);
         clientBalls[player.id].maxSpeed = 4;
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;

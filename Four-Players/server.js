@@ -2,6 +2,7 @@
 const PAD_ANGLE_FRICTION = 0.05;
 const PAD_ANGLE_KEY_FORCE = 0.08;
 const PAD_WIDTH = 25;
+const PAD_LENGTH = 50;
 const PAD_MASS = 10;
 
 const BODIES = [];
@@ -863,25 +864,27 @@ function connected(socket){
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
     if (clientNo % 2 === 1){
         //creating player 1
-        serverBalls[socket.id] = new Capsule(80, 270, 150, 270, PAD_WIDTH, PAD_MASS);
+        const xPad = 115;
+        serverBalls[socket.id] = new Capsule(xPad - PAD_LENGTH/2, 270, xPad + PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
         serverBalls[socket.id].maxSpeed = 4;
         serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
         serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
         serverBalls[socket.id].score = 0;
         serverBalls[socket.id].no = 1;
         serverBalls[socket.id].layer = roomNo;
-        playerReg[socket.id] = {id: socket.id, x: 115, y: 270, roomNo: roomNo, no: 1};
+        playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 1};
     }
     else if (clientNo % 2 === 0){
         //creating player 2
-        serverBalls[socket.id] = new Capsule(560, 270, 490, 270, PAD_WIDTH, PAD_MASS);
+        const xPad = 525;
+        serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
         serverBalls[socket.id].maxSpeed = 4;
         serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
         serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
         serverBalls[socket.id].score = 0;
         serverBalls[socket.id].no = 2;
         serverBalls[socket.id].layer = roomNo;
-        playerReg[socket.id] = {id: socket.id, x: 525, y: 270, roomNo: roomNo, no: 2};
+        playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 2};
         football[roomNo] = new Ball(320, 270, 20, 6);
         football[roomNo].layer = roomNo;
         io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y});
