@@ -95,28 +95,39 @@ socket.on('updateScore', scorerId => {
 
 requestAnimationFrame(renderOnly);
 
-function userInterface(){
-    ctx.font = "30px Arial";
+function userInterface()
+{
+    const fontSizeScore = "48px Arial";
+    const fontSizeName  = "30px Arial";
+    
     for (let id in clientBalls){
-        if(clientBalls[id].no === 1){
+        if(clientBalls[id].no === 1)
+        {
+            ctx.font = fontSizeScore;
             ctx.fillStyle = "red";
             ctx.textAlign = "left";
-            ctx.fillText(clientBalls[id].score, 30, 30);
-            if(clientBalls[id].name){
-                ctx.fillText(clientBalls[id].name, 30, 70);
+            ctx.fillText(clientBalls[id].score, 10, 40);
+            if(clientBalls[id].name)
+            {
+                ctx.font = fontSizeName;
+                ctx.fillText(clientBalls[id].name, 60, 30);
             } else {
                 ctx.fillStyle = "black";
-                ctx.fillText("....", 30, 70);
+                ctx.fillText("....", 60, 30);
             }
-        } else if(clientBalls[id].no === 2){
+        } else if(clientBalls[id].no === 2)
+        {
+            ctx.font = fontSizeScore;
             ctx.fillStyle = "green";
             ctx.textAlign = "right";
-            ctx.fillText(clientBalls[id].score, 600, 30);
-            if(clientBalls[id].name){
-                ctx.fillText(clientBalls[id].name, 600, 70);
+            ctx.fillText(clientBalls[id].score, 630, 40);
+            if(clientBalls[id].name)
+            {
+                ctx.font = fontSizeName;
+                ctx.fillText(clientBalls[id].name, 580, 30);
             } else {
                 ctx.fillStyle = "black";
-                ctx.fillText("....", 600, 70);
+                ctx.fillText("....", 580, 30);
             }
         }
     }
