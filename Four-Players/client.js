@@ -7,6 +7,7 @@ const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
 const PAD_LENGTH = 50;
+const MATCH_POINTS = 5;
 
 buildStadium();
 let football;
@@ -82,7 +83,7 @@ socket.on('updateScore', scorerId => {
                 } else if(clientBalls[id].no === 2){
                     clientBalls[id].score++;
                 }
-                if(clientBalls[id].score === 3){
+                if(clientBalls[id].score === MATCH_POINTS){
                     document.getElementById('winning').innerHTML = 
                     `The winner is ${clientBalls[id].name}!!!
                     <br>LET'S PLAY AGAIN!`

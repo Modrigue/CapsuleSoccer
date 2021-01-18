@@ -5,6 +5,8 @@ const PAD_WIDTH = 25;
 const PAD_LENGTH = 50;
 const PAD_MASS = 10;
 
+const MATCH_POINTS = 5;
+
 const BODIES = [];
 const COLLISIONS = [];
 
@@ -974,7 +976,7 @@ function gameLogic(room){
         scoring(room);
     }
     for(let id in serverBalls){
-        if(serverBalls[id].score === 3 && serverBalls[id].layer === room){
+        if(serverBalls[id].score === MATCH_POINTS && serverBalls[id].layer === room){
             gameOver(room);
         }
     }
@@ -1021,7 +1023,7 @@ function gameSetup(room){
         if (serverBalls[id].no === 1 && serverBalls[id].layer === room){
             serverBalls[id].vel.set(0, 0);
             serverBalls[id].angVel = 0;
-            serverBalls[id].setPosition(115, 270, 0);
+            serverBalls[id].setPosition(115, 270, Math.PI);
         }
         if (serverBalls[id].no === 2 && serverBalls[id].layer === room){
             serverBalls[id].vel.set(0, 0);
