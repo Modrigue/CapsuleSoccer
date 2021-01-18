@@ -333,7 +333,7 @@ class Ball extends Body{
 class Capsule extends Body{
     constructor(x1, y1, x2, y2, r, m){
         super();
-        this.comp = [new Circle(x1, y1, r), new Circle(x2, y2, r)];
+        this.comp = [new Circle(x1, y1, r), new Circle(x2, y2, r/2)];
         let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
         let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
         this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r));
@@ -865,12 +865,13 @@ function connected(socket){
     if (clientNo % 2 === 1){
         //creating player 1
         const xPad = 115;
-        serverBalls[socket.id] = new Capsule(xPad - PAD_LENGTH/2, 270, xPad + PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
+        serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
         serverBalls[socket.id].maxSpeed = 4;
         serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
         serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
         serverBalls[socket.id].score = 0;
         serverBalls[socket.id].no = 1;
+        serverBalls[socket.id].angle = Math.PI; // face right
         serverBalls[socket.id].layer = roomNo;
         playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 1};
     }
