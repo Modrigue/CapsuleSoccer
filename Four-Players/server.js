@@ -2,8 +2,8 @@ const DEPLOY = false;
 const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
 // game parameters
-const NB_PLAYERS_GAME = 2
-const MATCH_POINTS = 5;
+const NB_PLAYERS_GAME = 2;
+const NB_POINTS_MATCH = 5;
 
 // pad paremeters
 const PAD_ANGLE_FRICTION = 0.05;
@@ -1009,7 +1009,7 @@ function gameLogic(room){
         scoring(room);
     }
     for(let id in serverBalls){
-        if(serverBalls[id].score === MATCH_POINTS && serverBalls[id].layer === room){
+        if(serverBalls[id].score === NB_POINTS_MATCH && serverBalls[id].layer === room){
             gameOver(room);
         }
     }
@@ -1106,6 +1106,10 @@ function playersReadyInRoom(room)
             pno++;
         }
     }
+
+    // send game parameters
+    io.emit('setNbPointsMatch', NB_POINTS_MATCH);
+
     return pno;
 }
 

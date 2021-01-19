@@ -10,7 +10,7 @@ const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
 const PAD_LENGTH = 50;
-const MATCH_POINTS = 5;
+let NB_POINTS_MATCH = 5;
 
 buildStadium();
 let football;
@@ -19,6 +19,10 @@ let selfID;
 
 socket.on('connect', () => {
     selfID = socket.id;
+})
+
+socket.on('setNbPointsMatch', nb_points => {
+    NB_POINTS_MATCH = nb_points;
 })
 
 socket.on('updateConnections', player => {
@@ -101,7 +105,8 @@ socket.on('updateScore', scorerId => {
                 if (isNumeric(clientBalls[id].no))
                     clientBalls[id].score++;
 
-                if(clientBalls[id].score === MATCH_POINTS){
+                if(clientBalls[id].score === NB_POINTS_MATCH)
+                {
                     document.getElementById('winning').innerHTML = 
                     `The winner is ${clientBalls[id].name}!!!
                     <br>LET'S PLAY AGAIN!`
