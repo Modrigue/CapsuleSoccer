@@ -301,6 +301,19 @@ class Ball extends Body{
         this.comp[0].r = r;
     }
 
+    setMass(m)
+    {
+        this.m = m;
+        if (this.m === 0)
+        {
+            this.inv_m = 0;
+        }
+        else
+        {
+            this.inv_m = 1 / this.m;
+        }
+    }
+
     reposition(){
         super.reposition();
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);

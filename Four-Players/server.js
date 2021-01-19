@@ -14,6 +14,8 @@ const PAD_MASS = 10;
 
 // ball paremeters
 let BALL_RADIUS = Math.floor(10 + (40 - 10)*Math.random());
+const BALL_MASS_ARRAY = [1, 5, 10, 20, 100];
+let BALL_MASS = BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];
 
 const BODIES = [];
 const COLLISIONS = [];
@@ -316,6 +318,19 @@ class Ball extends Body{
     setRadius(r)
     {
         this.comp[0].r = r;
+    }
+
+    setMass(m)
+    {
+        this.m = m;
+        if (this.m === 0)
+        {
+            this.inv_m = 0;
+        }
+        else
+        {
+            this.inv_m = 1 / this.m;
+        }
     }
 
     reposition(){
@@ -960,9 +975,10 @@ function connected(socket)
             serverBalls[socket.id].layer = roomNo;
             playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
 
-            football[roomNo] = new Ball(320, 270, BALL_RADIUS, 6);
+            football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
             football[roomNo].layer = roomNo;
             io.emit('updateBallRadius', BALL_RADIUS);
+            io.emit('updateBallMass', BALL_MASS);
             io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y, r: BALL_RADIUS});
             break;
         }
@@ -1137,12 +1153,15 @@ function roundSetup(room)
         }
     }
 
-    // generate random ball radius
+    // generate new random ball parameters
     BALL_RADIUS = Math.floor(10 + (40 - 10)*Math.random());
+    BALL_MASS = BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];
     football[room].pos.set(320, 270);
     football[room].vel.set(0, 0);
     football[room].setRadius(BALL_RADIUS);
+    football[room].setMass(BALL_MASS);
     io.emit('updateBallRadius', BALL_RADIUS);
+    io.emit('updateBallMass', BALL_MASS);
     io.emit('newRound');
 }
 

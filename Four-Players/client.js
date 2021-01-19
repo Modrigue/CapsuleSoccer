@@ -15,6 +15,7 @@ let NB_POINTS_MATCH = 5;
 const PAD_LENGTH = 50;
 
 let BALL_RADIUS = 20;
+let BALL_MASS = 10;
 
 const PLAYERS_COLORS = ["salmon", "lightgreen", "orange", "mediumseagreen"];
 
@@ -36,6 +37,13 @@ socket.on('updateBallRadius', ballRadius => {
     
     if (football !== undefined)
         football.setRadius(BALL_RADIUS);
+})
+
+socket.on('updateBallMass', ballMass => {
+    BALL_MASS = ballMass;
+
+    if (football !== undefined)
+        football.setMass(BALL_MASS);
 })
 
 socket.on('updateConnections', player => {
@@ -80,7 +88,7 @@ socket.on('newRound', () => {
 socket.on('updateFootball', footballParams => {
     if(football === undefined)
     {
-        football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, 10);
+        football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
         football.color = "blue";
     }
     else
