@@ -12,6 +12,9 @@ const PAD_WIDTH = 25;
 const PAD_LENGTH = 50;
 const PAD_MASS = 10;
 
+// ball paremeters
+let BALL_RADIUS = Math.floor(10 + (40 - 10)*Math.random());
+
 const BODIES = [];
 const COLLISIONS = [];
 
@@ -308,6 +311,11 @@ class Ball extends Body{
     setPosition(x, y, a = this.angle){
         this.pos.set(x, y);
         this.comp[0].pos = this.pos;
+    }
+
+    setRadius(r)
+    {
+        this.comp[0].r = r;
     }
 
     reposition(){
@@ -871,7 +879,7 @@ buildStadium();
 let playerReg = {};
 let serverBalls = {};
 let football = {};
-let footballPos = {};
+let footballParams = {};
 let clientNo = 0;
 let roomNo;
 let gameIsOn = {};
@@ -952,9 +960,10 @@ function connected(socket)
             serverBalls[socket.id].layer = roomNo;
             playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
 
-            football[roomNo] = new Ball(320, 270, 20, 6);
+            football[roomNo] = new Ball(320, 270, BALL_RADIUS, 6);
             football[roomNo].layer = roomNo;
-            io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y});
+            io.emit('updateBallRadius', BALL_RADIUS);
+            io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y, r: BALL_RADIUS});
             break;
         }
     }
@@ -1033,7 +1042,8 @@ function serverLoop(){
             }
             io.to(room).emit('updateFootball', {
                 x: football[room].pos.x,
-                y: football[room].pos.y
+                y: football[room].pos.y,
+                r: BALL_RADIUS
             });
         } else {
             //console.log("waiting for n players...");
@@ -1053,7 +1063,7 @@ function gameLogic(room){
 }
 
 function gameOver(room){
-    gameSetup(room);
+    roundSetup(room);
     io.to(room).emit('updateScore', null);
     setTimeout(() => {
         for(let id in serverBalls){
@@ -1086,11 +1096,11 @@ function scoring(room){
             }
         }
     }
-    gameSetup(room);
+    roundSetup(room);
     io.to(room).emit('updateScore', scorerId);
 }
 
-function gameSetup(room)
+function roundSetup(room)
 {
     const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
 
@@ -1127,8 +1137,13 @@ function gameSetup(room)
         }
     }
 
+    // generate random ball radius
+    BALL_RADIUS = Math.floor(10 + (40 - 10)*Math.random());
     football[room].pos.set(320, 270);
     football[room].vel.set(0, 0);
+    football[room].setRadius(BALL_RADIUS);
+    io.emit('updateBallRadius', BALL_RADIUS);
+    io.emit('newRound');
 }
 
 function buildStadium()
@@ -1161,6 +1176,7 @@ function playersReadyInRoom(room)
 
     // send game parameters
     io.emit('setNbPointsMatch', NB_POINTS_MATCH);
+    io.emit('setBallRadius', BALL_RADIUS);
 
     return pno;
 }

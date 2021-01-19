@@ -14,6 +14,8 @@ let NB_POINTS_MATCH = 5;
 
 const PAD_LENGTH = 50;
 
+let BALL_RADIUS = 20;
+
 const PLAYERS_COLORS = ["salmon", "lightgreen", "orange", "mediumseagreen"];
 
 buildStadium();
@@ -25,8 +27,15 @@ socket.on('connect', () => {
     selfID = socket.id;
 })
 
-socket.on('setNbPointsMatch', nb_points => {
-    NB_POINTS_MATCH = nb_points;
+socket.on('setNbPointsMatch', nbPoints => {
+    NB_POINTS_MATCH = nbPoints;
+})
+
+socket.on('updateBallRadius', ballRadius => {
+    BALL_RADIUS = ballRadius;
+    
+    if (football !== undefined)
+        football.setRadius(BALL_RADIUS);
 })
 
 socket.on('updateConnections', player => {
@@ -39,7 +48,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
 
-        clientBalls[player.id].color = PLAYERS_COLORS[clientBalls[player.id].no - 1];
+        clientBalls[player.id].color = PLAYERS_COLORS[player.no - 1];
 
         if(player.id === selfID)
         {
@@ -64,15 +73,19 @@ socket.on('playerName', data => {
     clientBalls[data.id].name = data.name;
 })
 
-socket.on('updateFootball', footballPos => {
+socket.on('newRound', () => {
+    //
+})
+
+socket.on('updateFootball', footballParams => {
     if(football === undefined)
     {
-        football = new Ball(footballPos.x, footballPos.y, 20, 10);
+        football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, 10);
         football.color = "blue";
     }
     else
     {
-        football.setPosition(footballPos.x, footballPos.y);
+        football.setPosition(footballParams.x, footballParams.y);
     }
 })
 

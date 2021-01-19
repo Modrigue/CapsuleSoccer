@@ -296,6 +296,11 @@ class Ball extends Body{
         this.comp[0].pos = this.pos;
     }
 
+    setRadius(r)
+    {
+        this.comp[0].r = r;
+    }
+
     reposition(){
         super.reposition();
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
