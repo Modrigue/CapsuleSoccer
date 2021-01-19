@@ -1095,9 +1095,7 @@ function gameSetup(room)
     const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
 
     for(let id in serverBalls)
-    {
-        console.log('serverBall id = ', id,  serverBalls[id].no);
-        
+    {        
         if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
         {
             switch(serverBalls[id].no)
@@ -1118,7 +1116,6 @@ function gameSetup(room)
                     serverBalls[id].vel.set(0, 0);
                     serverBalls[id].angVel = 0;
                     serverBalls[id].setPosition(115, 270 + yPadDiff/2, Math.PI);
-                    console.log('pos 3 ', serverBalls[id].pos);
                     break;
 
                 case NB_PLAYERS_IN_GAME:
