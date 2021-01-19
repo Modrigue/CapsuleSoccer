@@ -12,6 +12,8 @@ const gameAreaDiv = document.getElementById('gameArea');
 const PAD_LENGTH = 50;
 let NB_POINTS_MATCH = 5;
 
+const PLAYERS_COLORS = ["salmon", "lightgreen", "orange", "mediumseagreen"];
+
 buildStadium();
 let football;
 let clientBalls = {};
@@ -35,16 +37,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
 
-        switch(clientBalls[player.id].no)
-        {
-            case 1:
-                clientBalls[player.id].color = "salmon";
-                break;
-
-            case 2:
-                clientBalls[player.id].color = "lightgreen";
-                break;
-        }
+        clientBalls[player.id].color = PLAYERS_COLORS[clientBalls[player.id].no - 1];
 
         if(player.id === selfID)
         {
@@ -91,11 +84,14 @@ socket.on('positionUpdate', playerPos => {
 })
 
 socket.on('updateScore', scorerId => {
-    if (scorerId === null){
+    if (scorerId === null)
+    {
         for (let id in clientBalls){
             clientBalls[id].score = 0;
         } 
-    } else {
+    }
+    else
+    {
         document.getElementById('winning').innerHTML = ``;
         for (let id in clientBalls)
         {
@@ -119,12 +115,12 @@ socket.on('updateScore', scorerId => {
 requestAnimationFrame(renderOnly);
 
 function userInterface()
-{
-    const fontSizeScore = "48px Arial";
-    const fontSizeName  = "30px Arial";
-    
+{    
     for (let id in clientBalls)
     {
+        const fontSizeScore = "48px Arial";
+        const fontSizeName  = (id === selfID) ? "bold 32px Arial" : "30px Arial";
+
         switch(clientBalls[id].no)
         {
             case 1:
@@ -134,6 +130,7 @@ function userInterface()
                 ctx.fillText(clientBalls[id].score, 10, 40);
                 if(clientBalls[id].name)
                 {
+                    ctx.fillStyle = PLAYERS_COLORS[clientBalls[id].no - 1];
                     ctx.font = fontSizeName;
                     ctx.fillText(clientBalls[id].name, 60, 30);
                 }
@@ -142,7 +139,7 @@ function userInterface()
                     ctx.fillStyle = "black";
                     ctx.fillText("....", 60, 30);
                 }
-            break;
+                break;
 
             case 2:
                 ctx.font = fontSizeScore;
@@ -151,15 +148,52 @@ function userInterface()
                 ctx.fillText(clientBalls[id].score, 630, 40);
                 if(clientBalls[id].name)
                 {
+                    ctx.fillStyle = PLAYERS_COLORS[clientBalls[id].no - 1];
                     ctx.font = fontSizeName;
-                    ctx.fillText(clientBalls[id].name, 580, 30);
+                    ctx.fillText(clientBalls[id].name, 580, 60);
                 }
                 else
                 {
                     ctx.fillStyle = "black";
-                    ctx.fillText("....", 580, 30);
+                    ctx.fillText("....", 580, 60);
                 }
                 break;
+
+                case 3:
+                    //ctx.font = fontSizeScore;
+                    ctx.fillStyle = "red";
+                    ctx.textAlign = "left";
+                    //ctx.fillText(clientBalls[id].score, 10, 40);
+                    if(clientBalls[id].name)
+                    {
+                        ctx.fillStyle = PLAYERS_COLORS[clientBalls[id].no - 1];
+                        ctx.font = fontSizeName;
+                        ctx.fillText(clientBalls[id].name, 60, 60);
+                    }
+                    else
+                    {
+                        ctx.fillStyle = "black";
+                        ctx.fillText("....", 60, 60);
+                    }
+                    break;
+    
+                case 4:
+                    ctx.font = fontSizeScore;
+                    ctx.fillStyle = "green";
+                    ctx.textAlign = "right";
+                    //ctx.fillText(clientBalls[id].score, 630, 40);
+                    if(clientBalls[id].name)
+                    {
+                        ctx.fillStyle = PLAYERS_COLORS[clientBalls[id].no - 1];
+                        ctx.font = fontSizeName;
+                        ctx.fillText(clientBalls[id].name, 580, 30);
+                    }
+                    else
+                    {
+                        ctx.fillStyle = "black";
+                        ctx.fillText("....", 580, 30);
+                    }
+                    break;
         }
     }
 }
@@ -182,7 +216,8 @@ function buildStadium()
     new Wall(630, 180, 590, 180);
 }
 
-form.onsubmit = function(e) {
+form.onsubmit = function(e)
+{
     e.preventDefault();
     form.style.display = 'none';
     gameAreaDiv.style.display = 'block';

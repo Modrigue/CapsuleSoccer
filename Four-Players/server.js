@@ -2,7 +2,7 @@ const DEPLOY = false;
 const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
 // game parameters
-const NB_PLAYERS_GAME = 2;
+const NB_PLAYERS_IN_GAME = 4;
 const NB_POINTS_MATCH = 5;
 
 // pad paremeters
@@ -879,18 +879,22 @@ let gameIsOn = {};
 io.on('connection', connected);
 setInterval(serverLoop, 1000/60);
 
-function connected(socket){
+function connected(socket)
+{
     clientNo++;
-    roomNo = Math.round(clientNo / NB_PLAYERS_GAME);
+    roomNo = Math.round(clientNo / NB_PLAYERS_IN_GAME);
     socket.join(roomNo);
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
-    switch (clientNo % NB_PLAYERS_GAME)
+
+    const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
+
+    switch (clientNo % NB_PLAYERS_IN_GAME)
     {
         case 1:
         {
             // creating player 1
             const xPad = 115;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
@@ -898,15 +902,15 @@ function connected(socket){
             serverBalls[socket.id].no = 1;
             serverBalls[socket.id].angle = Math.PI; // face right
             serverBalls[socket.id].layer = roomNo;
-            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 1};
+            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: 1};
             break;
         }
 
-        case 0:
+        case 2:
         {
-            // creating player <NB_PLAYERS_GAME>
+            // creating player 2
             const xPad = 525;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
@@ -914,7 +918,40 @@ function connected(socket){
             serverBalls[socket.id].no = 2;
             serverBalls[socket.id].angle = 0; // face left
             serverBalls[socket.id].layer = roomNo;
-            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 2};
+            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: 2};
+            break;
+        }
+
+        case 3:
+        {
+            // creating player 3
+            const xPad = 115;
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id].maxSpeed = 4;
+            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+            serverBalls[socket.id].score = 0;
+            serverBalls[socket.id].no = 1;
+            serverBalls[socket.id].angle = Math.PI; // face right
+            serverBalls[socket.id].layer = roomNo;
+            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 + yPadDiff/2, roomNo: roomNo, no: 3};
+            break;
+        }
+
+        case 0:
+        {
+            // creating player <NB_PLAYERS_GAME>
+            const xPad = 525;
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id].maxSpeed = 4;
+            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+            serverBalls[socket.id].score = 0;
+            serverBalls[socket.id].no = 2;
+            serverBalls[socket.id].angle = 0; // face left
+            serverBalls[socket.id].layer = roomNo;
+            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
+
             football[roomNo] = new Ball(320, 270, 20, 6);
             football[roomNo].layer = roomNo;
             io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y});
@@ -962,7 +999,7 @@ function connected(socket){
     socket.on('clientName', data => {
         serverBalls[socket.id].name = data;
         console.log(`${data} is in room no.${serverBalls[socket.id].layer}`);
-        if (playersReadyInRoom(serverBalls[socket.id].layer) === NB_PLAYERS_GAME)
+        if (playersReadyInRoom(serverBalls[socket.id].layer) === NB_PLAYERS_IN_GAME)
         {
             for (let id in serverBalls){
                 if(serverBalls[id].layer === serverBalls[socket.id].layer){
@@ -1067,6 +1104,18 @@ function gameSetup(room){
                     break;
 
                 case 2:
+                    serverBalls[id].vel.set(0, 0);
+                    serverBalls[id].angVel = 0;
+                    serverBalls[id].setPosition(500, 270, 0);
+                    break;
+
+                case 3:
+                    serverBalls[id].vel.set(0, 0);
+                    serverBalls[id].angVel = 0;
+                    serverBalls[id].setPosition(140, 270, Math.PI);
+                    break;
+
+                case NB_PLAYERS_IN_GAME:
                     serverBalls[id].vel.set(0, 0);
                     serverBalls[id].angVel = 0;
                     serverBalls[id].setPosition(525, 270, 0);
