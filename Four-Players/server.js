@@ -6,8 +6,8 @@ const NB_PLAYERS_IN_GAME = 4;
 const NB_POINTS_MATCH = 5;
 
 // pad paremeters
-const PAD_ANGLE_FRICTION = 0.05;
-const PAD_ANGLE_KEY_FORCE = 0.08;
+const PAD_ANGLE_FRICTION = 0.08;
+const PAD_ANGLE_KEY_FORCE = 0.07;
 const PAD_WIDTH = 25;
 const PAD_LENGTH = 50;
 const PAD_MASS = 10;
@@ -931,7 +931,7 @@ function connected(socket)
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
             serverBalls[socket.id].score = 0;
-            serverBalls[socket.id].no = 1;
+            serverBalls[socket.id].no = 3;
             serverBalls[socket.id].angle = Math.PI; // face right
             serverBalls[socket.id].layer = roomNo;
             playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 + yPadDiff/2, roomNo: roomNo, no: 3};
@@ -940,14 +940,14 @@ function connected(socket)
 
         case 0:
         {
-            // creating player <NB_PLAYERS_GAME>
+            // creating player <NB_PLAYERS_IN_GAME>
             const xPad = 525;
             serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
             serverBalls[socket.id].score = 0;
-            serverBalls[socket.id].no = 2;
+            serverBalls[socket.id].no = NB_PLAYERS_IN_GAME;
             serverBalls[socket.id].angle = 0; // face left
             serverBalls[socket.id].layer = roomNo;
             playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
@@ -1069,10 +1069,10 @@ function scoring(room){
     if(football[room].pos.x < 45)
     {
         for(let id in serverBalls){
-            if (serverBalls[id].no === 2 && serverBalls[id].layer === room){
+            if (serverBalls[id].no === NB_PLAYERS_IN_GAME && serverBalls[id].layer === room){
                 serverBalls[id].score++;
                 scorerId = id;
-                console.log("score for player 2!");
+                console.log("score for team 2!");
             }
         }
     }
@@ -1082,7 +1082,7 @@ function scoring(room){
             if (serverBalls[id].no === 1 && serverBalls[id].layer === room){
                 serverBalls[id].score++;
                 scorerId = id;
-                console.log("score for player 1!");
+                console.log("score for team 1!");
             }
         }
     }
@@ -1090,9 +1090,14 @@ function scoring(room){
     io.to(room).emit('updateScore', scorerId);
 }
 
-function gameSetup(room){
+function gameSetup(room)
+{
+    const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
+
     for(let id in serverBalls)
     {
+        console.log('serverBall id = ', id,  serverBalls[id].no);
+        
         if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
         {
             switch(serverBalls[id].no)
@@ -1100,25 +1105,26 @@ function gameSetup(room){
                 case 1:
                     serverBalls[id].vel.set(0, 0);
                     serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(115, 270, Math.PI);
+                    serverBalls[id].setPosition(115, 270 - yPadDiff/2, Math.PI);
                     break;
 
                 case 2:
                     serverBalls[id].vel.set(0, 0);
                     serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(500, 270, 0);
+                    serverBalls[id].setPosition(525, 270 + yPadDiff/2, 0);
                     break;
 
                 case 3:
                     serverBalls[id].vel.set(0, 0);
                     serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(140, 270, Math.PI);
+                    serverBalls[id].setPosition(115, 270 + yPadDiff/2, Math.PI);
+                    console.log('pos 3 ', serverBalls[id].pos);
                     break;
 
                 case NB_PLAYERS_IN_GAME:
                     serverBalls[id].vel.set(0, 0);
                     serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(525, 270, 0);
+                    serverBalls[id].setPosition(525, 270 - yPadDiff/2, 0);
                     break;
             }
         }
