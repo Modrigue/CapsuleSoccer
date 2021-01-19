@@ -1,14 +1,16 @@
 const DEPLOY = false;
 const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
+// game parameters
+const NB_PLAYERS_GAME = 2
+const MATCH_POINTS = 5;
+
 // pad paremeters
 const PAD_ANGLE_FRICTION = 0.05;
 const PAD_ANGLE_KEY_FORCE = 0.08;
 const PAD_WIDTH = 25;
 const PAD_LENGTH = 50;
 const PAD_MASS = 10;
-
-const MATCH_POINTS = 5;
 
 const BODIES = [];
 const COLLISIONS = [];
@@ -879,45 +881,55 @@ setInterval(serverLoop, 1000/60);
 
 function connected(socket){
     clientNo++;
-    roomNo = Math.round(clientNo / 2);
+    roomNo = Math.round(clientNo / NB_PLAYERS_GAME);
     socket.join(roomNo);
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
-    if (clientNo % 2 === 1){
-        //creating player 1
-        const xPad = 115;
-        serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
-        serverBalls[socket.id].maxSpeed = 4;
-        serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-        serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-        serverBalls[socket.id].score = 0;
-        serverBalls[socket.id].no = 1;
-        serverBalls[socket.id].angle = Math.PI; // face right
-        serverBalls[socket.id].layer = roomNo;
-        playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 1};
-    }
-    else if (clientNo % 2 === 0){
-        //creating player 2
-        const xPad = 525;
-        serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
-        serverBalls[socket.id].maxSpeed = 4;
-        serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-        serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-        serverBalls[socket.id].score = 0;
-        serverBalls[socket.id].no = 2;
-        serverBalls[socket.id].angle = 0; // face left
-        serverBalls[socket.id].layer = roomNo;
-        playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 2};
-        football[roomNo] = new Ball(320, 270, 20, 6);
-        football[roomNo].layer = roomNo;
-        io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y});
+    switch (clientNo % NB_PLAYERS_GAME)
+    {
+        case 1:
+        {
+            // creating player 1
+            const xPad = 115;
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id].maxSpeed = 4;
+            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+            serverBalls[socket.id].score = 0;
+            serverBalls[socket.id].no = 1;
+            serverBalls[socket.id].angle = Math.PI; // face right
+            serverBalls[socket.id].layer = roomNo;
+            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 1};
+            break;
+        }
+
+        case 0:
+        {
+            // creating player <NB_PLAYERS_GAME>
+            const xPad = 525;
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270, xPad - PAD_LENGTH/2, 270, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id].maxSpeed = 4;
+            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+            serverBalls[socket.id].score = 0;
+            serverBalls[socket.id].no = 2;
+            serverBalls[socket.id].angle = 0; // face left
+            serverBalls[socket.id].layer = roomNo;
+            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270, roomNo: roomNo, no: 2};
+            football[roomNo] = new Ball(320, 270, 20, 6);
+            football[roomNo].layer = roomNo;
+            io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y});
+            break;
+        }
     }
 
-    for (let id in serverBalls){
+    for (let id in serverBalls)
+    {
         io.to(serverBalls[id].layer).emit('updateConnections', playerReg[id]);
     }
 
     socket.on('disconnect', function(){
-        if(football[serverBalls[socket.id].layer]){
+        if(football[serverBalls[socket.id].layer])
+        {
             football[serverBalls[socket.id].layer].remove();
             delete football[football[serverBalls[socket.id].layer]];
         }
@@ -950,7 +962,8 @@ function connected(socket){
     socket.on('clientName', data => {
         serverBalls[socket.id].name = data;
         console.log(`${data} is in room no.${serverBalls[socket.id].layer}`);
-        if (playersReadyInRoom(serverBalls[socket.id].layer) === 2){
+        if (playersReadyInRoom(serverBalls[socket.id].layer) === NB_PLAYERS_GAME)
+        {
             for (let id in serverBalls){
                 if(serverBalls[id].layer === serverBalls[socket.id].layer){
                     io.to(serverBalls[id].layer).emit('playerName', {id: id, name: serverBalls[id].name});
@@ -967,9 +980,11 @@ function serverLoop(){
     userInteraction();
     physicsLoop();
     for (let room = 1; room <= roomNo; room++){
-        if (gameIsOn[room] === true){
+        if (gameIsOn[room] === true)
+        {
             gameLogic(room);
-            for (let id in serverBalls){
+            for (let id in serverBalls)
+            {
                 if (serverBalls[id].layer === room){
                     io.to(room).emit('positionUpdate', {
                         id: id,
@@ -984,7 +999,7 @@ function serverLoop(){
                 y: football[room].pos.y
             });
         } else {
-            //console.log("waiting for 2 players...");
+            //console.log("waiting for n players...");
         }
     }
 }
@@ -1014,7 +1029,8 @@ function gameOver(room){
 
 function scoring(room){
     let scorerId;
-    if(football[room].pos.x < 45){
+    if(football[room].pos.x < 45)
+    {
         for(let id in serverBalls){
             if (serverBalls[id].no === 2 && serverBalls[id].layer === room){
                 serverBalls[id].score++;
@@ -1023,7 +1039,8 @@ function scoring(room){
             }
         }
     }
-    if(football[room].pos.x > 595){
+    if(football[room].pos.x > 595)
+    {
         for(let id in serverBalls){
             if (serverBalls[id].no === 1 && serverBalls[id].layer === room){
                 serverBalls[id].score++;
@@ -1037,23 +1054,33 @@ function scoring(room){
 }
 
 function gameSetup(room){
-    for(let id in serverBalls){
-        if (serverBalls[id].no === 1 && serverBalls[id].layer === room){
-            serverBalls[id].vel.set(0, 0);
-            serverBalls[id].angVel = 0;
-            serverBalls[id].setPosition(115, 270, Math.PI);
-        }
-        if (serverBalls[id].no === 2 && serverBalls[id].layer === room){
-            serverBalls[id].vel.set(0, 0);
-            serverBalls[id].angVel = 0;
-            serverBalls[id].setPosition(525, 270, 0);
+    for(let id in serverBalls)
+    {
+        if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
+        {
+            switch(serverBalls[id].no)
+            {
+                case 1:
+                    serverBalls[id].vel.set(0, 0);
+                    serverBalls[id].angVel = 0;
+                    serverBalls[id].setPosition(115, 270, Math.PI);
+                    break;
+
+                case 2:
+                    serverBalls[id].vel.set(0, 0);
+                    serverBalls[id].angVel = 0;
+                    serverBalls[id].setPosition(525, 270, 0);
+                    break;
+            }
         }
     }
+
     football[room].pos.set(320, 270);
     football[room].vel.set(0, 0);
 }
 
-function buildStadium(){
+function buildStadium()
+{
     new Wall(60, 80, 580, 80);
     new Wall(60, 460, 580, 460);
 
@@ -1070,12 +1097,19 @@ function buildStadium(){
     new Wall(630, 180, 590, 180);
 }
 
-function playersReadyInRoom(room){
+function playersReadyInRoom(room)
+{
     let pno = 0;
-    for (let id in serverBalls){
+    for (let id in serverBalls)
+    {
         if(serverBalls[id].layer === room && serverBalls[id].name){
             pno++;
         }
     }
     return pno;
+}
+
+function isNumeric(value)
+{
+    return !isNaN(value)
 }
