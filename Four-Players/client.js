@@ -21,7 +21,7 @@ const PAD_LENGTH = 50;
 let BALL_RADIUS = 20;
 let BALL_MASS = 10;
 
-const PLAYERS_COLORS = ["salmon", "lightgreen", "orange", "mediumseagreen"];
+const PLAYERS_COLORS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
 
 buildStadium();
 let football;
