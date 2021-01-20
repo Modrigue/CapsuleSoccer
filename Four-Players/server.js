@@ -905,7 +905,7 @@ setInterval(serverLoop, 1000/60);
 function connected(socket)
 {
     clientNo++;
-    roomNo = Math.round(clientNo / NB_PLAYERS_IN_GAME);
+    roomNo = Math.ceil(clientNo / NB_PLAYERS_IN_GAME);
     socket.join(roomNo);
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
 
