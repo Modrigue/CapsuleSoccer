@@ -22,6 +22,7 @@ let BALL_RADIUS = 20;
 let BALL_MASS = 10;
 
 const PLAYERS_COLORS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
+const MARK_COLOR = "LightSkyBlue";
 
 buildStadium();
 let football;
@@ -232,10 +233,12 @@ function userInterface()
 function buildStadium()
 {
     // Marks
-    new LineMark(320, 81, 320, 459, "LightSkyBlue");
-    new LineMark(60, 180, 60, 360, "LightSkyBlue");
-    new LineMark(580, 180, 580, 360, "LightSkyBlue");
-    new CircleMark(320, 270, 60, "LightSkyBlue");
+    new LineMark(60, 180, 60, 360, MARK_COLOR);
+    new LineMark(320, 81, 320, 459, MARK_COLOR);
+    new LineMark(580, 180, 580, 360, MARK_COLOR);
+    new CircleMark(320, 270, 60, MARK_COLOR);
+    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, MARK_COLOR);
+    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, MARK_COLOR);
 
     // Top / bottom walls
     new Wall(60, 80, 580, 80);

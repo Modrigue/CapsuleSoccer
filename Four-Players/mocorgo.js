@@ -144,6 +144,37 @@ class Circle{
     }
 }
 
+class Arc{
+    constructor(x, y, r, a_start, a_end){
+        this.vertex = [];
+        this.pos = new Vector(x, y);
+        this.r = r;
+        this.angle_start = a_start;
+        this.angle_end = a_end;
+    }
+
+    draw(color, fill = true)
+    {
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
+        const drawColor = (color === "") ? "black" : color;
+
+        if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
+            ctx.stroke();
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
+            ctx.fill();
+        }
+
+        ctx.fillStyle = "";
+        ctx.closePath();
+    }
+}
+
 class Rectangle{
     constructor(x1, y1, x2, y2, w){
         this.vertex = [];
@@ -569,6 +600,19 @@ class CircleMark extends Body{
         super();
         this.pos = new Vector(x, y);
         this.comp = [new Circle(x, y, r)];
+
+        this.color = color;
+        this.fill = false;
+        this.collides = false;
+    }
+}
+
+class ArcMark extends Body{
+    constructor(x, y, r, a_start, a_end, color = "White")
+    {
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Arc(x, y, r, a_start, a_end)];
 
         this.color = color;
         this.fill = false;
