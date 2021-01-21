@@ -13,9 +13,8 @@ const PAD_LENGTH = 50;
 const PAD_MASS = 10;
 
 // ball paremeters
-let BALL_RADIUS = Math.floor(10 + (40 - 10)*Math.random());
-const BALL_MASS_ARRAY = [1, 5, 10, 20, 100];
-let BALL_MASS = BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];
+let BALL_RADIUS = newRandomBallRadius();
+let BALL_MASS = newRandomBallMass();
 
 const BODIES = [];
 const COLLISIONS = [];
@@ -1154,8 +1153,8 @@ function roundSetup(room)
     }
 
     // generate new random ball parameters
-    BALL_RADIUS = Math.floor(10 + (40 - 10)*Math.random());
-    BALL_MASS = BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];
+    BALL_RADIUS = newRandomBallRadius()
+    BALL_MASS = newRandomBallMass();
     football[room].pos.set(320, 270);
     football[room].vel.set(0, 0);
     football[room].setRadius(BALL_RADIUS);
@@ -1198,6 +1197,21 @@ function playersReadyInRoom(room)
     io.emit('setBallRadius', BALL_RADIUS);
 
     return pno;
+}
+
+function newRandomBallRadius()
+{
+    const BALL_RADIUS_MIN = 10;
+    const BALL_RADIUS_MAX = 40;
+
+    return Math.floor(BALL_RADIUS_MIN + (BALL_RADIUS_MAX - BALL_RADIUS_MIN)*Math.random());
+}
+
+function newRandomBallMass()
+{
+    const BALL_MASS_ARRAY = [1, 5, 10, 20, 100];
+
+    return BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];;
 }
 
 function isNumeric(value)
