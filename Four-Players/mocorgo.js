@@ -98,7 +98,8 @@ class Line{
         this.pos = new Vector((this.vertex[0].x+this.vertex[1].x)/2, (this.vertex[0].y+this.vertex[1].y)/2);
     }
 
-    draw(color){
+    draw(color, fill = true)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
@@ -121,16 +122,23 @@ class Circle{
         this.r = r;
     }
 
-    draw(color){
+    draw(color, fill = true)
+    {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+        const drawColor = (color === "") ? "black" : color;
+
+        if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -152,18 +160,25 @@ class Rectangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color){
+    draw(color, fill = true)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
         ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
         ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
         ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+
+        const drawColor = (color === "") ? "black" : color;
+
+        if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
         ctx.fillStyle = "";
@@ -197,19 +212,27 @@ class Triangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color){
+    draw(color, fill = true)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
         ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
         ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+
+        const drawColor = (color === "") ? "black" : color;
+
+        if (color === "")
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -260,7 +283,7 @@ class Body{
 
     render(){
         for (let i in this.comp){
-            this.comp[i].draw(this.color);
+            this.comp[i].draw(this.color, this.fill);
         }
     }
     reposition(){
@@ -536,6 +559,19 @@ class LineMark extends Body{
         this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
 
         this.color = color;
+        this.collides = false;
+    }
+}
+
+class CircleMark extends Body{
+    constructor(x, y, r, color = "White")
+    {
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Circle(x, y, r)];
+
+        this.color = color;
+        this.fill = false;
         this.collides = false;
     }
 }

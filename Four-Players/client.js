@@ -235,6 +235,7 @@ function buildStadium()
     new LineMark(320, 81, 320, 459, "LightSkyBlue");
     new LineMark(60, 180, 60, 360, "LightSkyBlue");
     new LineMark(580, 180, 580, 360, "LightSkyBlue");
+    new CircleMark(320, 270, 60, "LightSkyBlue");
 
     // Top / bottom walls
     new Wall(60, 80, 580, 80);
