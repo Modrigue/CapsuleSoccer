@@ -271,6 +271,8 @@ class Body{
         this.angle = 0;
         this.angVel = 0;
         this.player = false;
+        this.collides = true;
+
         BODIES.push(this);
     }
 
@@ -293,6 +295,11 @@ class Body{
         if (BODIES.indexOf(this) !== -1){
             BODIES.splice(BODIES.indexOf(this), 1);
         }
+    }
+
+    setCollide(value)
+    {
+        this.collides = value;
     }
 }
 
@@ -536,6 +543,17 @@ class Wall extends Body{
         super();
         this.comp = [new Line(x1, y1, x2, y2)];
         this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+    }
+}
+
+class LineMark extends Body{
+    constructor(x1, y1, x2, y2, color = "White"){
+        super();
+        this.comp = [new Line(x1, y1, x2, y2)];
+        this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+
+        this.color = color;
+        this.collides = false;
     }
 }
 
@@ -794,7 +812,11 @@ function putWallsAround(x1, y1, x2, y2){
     let edge4 = new Wall(x1, y2, x1, y1);
 }
 
-function collide(o1, o2){
+function collide(o1, o2)
+{
+    if (!o1.collides || !o2.collides)
+        return false;
+
     let bestSat = {
         pen: null,
         axis: null,
@@ -1166,6 +1188,7 @@ function roundSetup(room)
 
 function buildStadium()
 {
+    // Top / bottom walls
     new Wall(60, 80, 580, 80);
     new Wall(60, 460, 580, 460);
 
