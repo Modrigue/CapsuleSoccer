@@ -98,7 +98,7 @@ class Line{
         this.pos = new Vector((this.vertex[0].x+this.vertex[1].x)/2, (this.vertex[0].y+this.vertex[1].y)/2);
     }
 
-    draw(color, fill = true)
+    draw(color, fill = true, image = null)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -122,13 +122,17 @@ class Circle{
         this.r = r;
     }
 
-    draw(color, fill = true)
+    draw(color, fill = true, image = null)
     {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
         const drawColor = (color === "") ? "black" : color;
 
-        if (!fill)
+        if (image !== null)
+        {
+            ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+        }
+        else if (!fill)
         {
             ctx.strokeStyle = drawColor;
             ctx.stroke();
@@ -153,7 +157,7 @@ class Arc{
         this.angle_end = a_end;
     }
 
-    draw(color, fill = true)
+    draw(color, fill = true, image = null)
     {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
@@ -191,7 +195,7 @@ class Rectangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color, fill = true)
+    draw(color, fill = true, image = null)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -243,7 +247,7 @@ class Triangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color, fill = true)
+    draw(color, fill = true, image = null)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -309,12 +313,14 @@ class Body{
         this.player = false;
         this.collides = true;
 
+        this.image = null;
+
         BODIES.push(this);
     }
 
     render(){
         for (let i in this.comp){
-            this.comp[i].draw(this.color, this.fill);
+            this.comp[i].draw(this.color, this.fill, this.image);
         }
     }
     reposition(){
@@ -336,6 +342,12 @@ class Body{
     setCollisions(value)
     {
         this.collides = value;
+    }
+
+    setImage(url)
+    {
+        this.image = new Image();
+        this.image.src = url;
     }
 }
 

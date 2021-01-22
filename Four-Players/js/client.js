@@ -95,6 +95,7 @@ socket.on('updateFootball', footballParams => {
     {
         football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
         football.color = "blue";
+        football.setImage("./img/blue-sphere-128.png");
     }
     else
     {
