@@ -13,7 +13,7 @@ const ctx = canvas.getContext('2d');
 const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
-let NB_PLAYERS_IN_GAME = 4;
+let NB_PLAYERS_IN_GAME = 2;
 let NB_POINTS_MATCH = 5;
 
 const PAD_LENGTH = 50;

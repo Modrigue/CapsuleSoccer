@@ -2,7 +2,7 @@ const DEPLOY = false;
 const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
 // game parameters
-const NB_PLAYERS_IN_GAME = 4;
+const NB_PLAYERS_IN_GAME = 2;
 const NB_POINTS_MATCH = 5;
 
 // pad paremeters
