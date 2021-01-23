@@ -13,15 +13,17 @@ const ctx = canvas.getContext('2d');
 const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
-let NB_PLAYERS_IN_GAME = 4;
+let NB_PLAYERS_IN_GAME = 2;
 let NB_POINTS_MATCH = 5;
 
 const PAD_LENGTH = 50;
 
 let BALL_RADIUS = 20;
 let BALL_MASS = 10;
+const BALL_IMG = "./img/blue-ball-128.png";
 
 const PLAYERS_COLORS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
+const MARK_COLOR = "LightSkyBlue";
 
 buildStadium();
 let football;
@@ -55,12 +57,20 @@ socket.on('updateConnections', player => {
 
     if(clientBalls[player.id] === undefined)
     {
-        clientBalls[player.id] = new Capsule(player.x + PAD_LENGTH/2, player.y, player.x - PAD_LENGTH/2, player.y, 25, 10);
+        clientBalls[player.id] = new Capsule(player.x + PAD_LENGTH/2, player.y, player.x - PAD_LENGTH/2, player.y, 25, 0, 10);
         clientBalls[player.id].maxSpeed = 4;
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
-
+        clientBalls[player.id].angle = Math.PI; // corrects render while waiting
         clientBalls[player.id].color = PLAYERS_COLORS[player.no - 1];
+
+        const side = (clientBalls[player.id].no % 2 == 0) ? "right" : "left";
+        const color = clientBalls[player.id].color.toLowerCase();
+        clientBalls[player.id].setImages(
+            [`img/missile-${side}-${color}-body-128.png`,
+             `img/missile-${side}-${color}-head-128.png`]
+        );
+        clientBalls[player.id].setActionImage(`img/missile-${side}-fire-128.png`);
 
         if(player.id === selfID)
         {
@@ -94,6 +104,7 @@ socket.on('updateFootball', footballParams => {
     {
         football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
         football.color = "blue";
+        football.setImages([BALL_IMG]);
     }
     else
     {
@@ -231,6 +242,15 @@ function userInterface()
 
 function buildStadium()
 {
+    // Marks
+    new LineMark(60, 180, 60, 360, MARK_COLOR);
+    new LineMark(320, 81, 320, 459, MARK_COLOR);
+    new LineMark(580, 180, 580, 360, MARK_COLOR);
+    new CircleMark(320, 270, 60, MARK_COLOR);
+    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, MARK_COLOR);
+    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, MARK_COLOR);
+
+    // Top / bottom walls
     new Wall(60, 80, 580, 80);
     new Wall(60, 460, 580, 460);
 

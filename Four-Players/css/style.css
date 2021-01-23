@@ -1,0 +1,62 @@
+#canvas{
+    border: 1px solid black;
+    display: block;
+    margin: 0 auto;
+    background: LightCyan;
+}
+
+#gameArea {
+    display: none;
+}
+
+#winning {
+    color: blue;
+    text-align: center;
+}
+
+button {
+    background:linear-gradient(to bottom, #fe1a00 5%, #ce0100 100%);
+    background-color:#fe1a00;
+    border-radius:28px;
+    border:1px solid #d83526;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:Arial;
+    font-size:17px;
+    padding:17px 31px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #b23e35;
+}
+
+button:hover {
+    background:linear-gradient(to bottom, #ce0100 5%, #fe1a00 100%);
+    background-color:#ce0100;
+}
+
+button:active {
+    position:relative;
+    top:1px;
+}
+
+#howto {
+    border: 1px solid black;
+    border-radius: 5px;
+    width: 40%;
+    font-family: Verdana;
+    margin: auto;
+}
+
+#userName {
+    border-radius: 10px;
+    height: 150%;
+}
+
+#userForm {
+    text-align: center;
+}
+
+#playerWelcome {
+    font-family: Verdana;
+    font-weight: bold;
+}

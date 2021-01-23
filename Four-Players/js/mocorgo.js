@@ -98,7 +98,8 @@ class Line{
         this.pos = new Vector((this.vertex[0].x+this.vertex[1].x)/2, (this.vertex[0].y+this.vertex[1].y)/2);
     }
 
-    draw(color){
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
@@ -121,16 +122,62 @@ class Circle{
         this.r = r;
     }
 
-    draw(color){
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+        const drawColor = (color === "") ? "black" : color;
+
+        if (image !== null)
+        {
+            if (angle == 0)
+                ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+            else
+                drawRotatedImage(ctx, image, 2*this.r, 2*this.r, angle,
+                    this.pos.x, this.pos.y, this.r, this.r);
+        }
+        else if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
+
+        ctx.fillStyle = "";
+        ctx.closePath();
+    }
+}
+
+class Arc{
+    constructor(x, y, r, a_start, a_end){
+        this.vertex = [];
+        this.pos = new Vector(x, y);
+        this.r = r;
+        this.angle_start = a_start;
+        this.angle_end = a_end;
+    }
+
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
+        const drawColor = (color === "") ? "black" : color;
+
+        if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
+            ctx.stroke();
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
+            ctx.fill();
+        }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -150,24 +197,72 @@ class Rectangle{
         this.pos = this.vertex[0].add(this.dir.mult(this.length/2)).add(this.dir.normal().mult(this.width/2));
         this.angle = 0;
         this.rotMat = new Matrix(2,2);
+
+        this.xy1 = new Vector(x1, y1);
+        this.xy2 = new Vector(x2, y2 + w);
     }
 
-    draw(color){
-        ctx.beginPath();
-        ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
-        ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
-        ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
-        ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
-        ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-        if (color === ""){
-            ctx.strokeStyle = "black";
-            ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
-            ctx.fill();
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
+        if (image !== null)
+        {
+            const xLength = this.xy2.x - this.xy1.x;
+            const yLength = this.xy2.y - this.xy1.y;
+
+            if (angle == 0)
+                ctx.drawImage(image, 
+                    this.pos.x - xLength/2,  this.pos.y - yLength/2,
+                    xLength, yLength);
+            else
+                drawRotatedImage(ctx, image,
+                    xLength, yLength,
+                    angle,
+                    this.pos.x, this.pos.y,
+                    xLength/2, yLength/2
+                );
         }
-        ctx.fillStyle = "";
-        ctx.closePath();
+        else
+        {
+            ctx.beginPath();
+            ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
+            ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
+            ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
+            ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
+            ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
+    
+            const drawColor = (color === "") ? "black" : color;
+
+            if (!fill)
+            {
+                ctx.strokeStyle = drawColor;
+                ctx.stroke();
+            }
+            else
+            {
+                ctx.fillStyle = drawColor;
+                ctx.fill();
+            }
+            ctx.fillStyle = "";
+            ctx.closePath();
+        }
+
+        if (action && actionImage !== null)
+        {
+            const xLength = 145; // specific
+            const yLength = this.xy2.y - this.xy1.y;
+
+            if (angle == 0)
+                ctx.drawImage(actionImage, 
+                    this.pos.x - xLength/2,  this.pos.y - yLength/2,
+                    xLength, yLength);
+            else
+                drawRotatedImage(ctx, actionImage,
+                    xLength, yLength,
+                    angle,
+                    this.pos.x, this.pos.y,
+                    xLength/2, yLength/2
+                );
+        }
     }
 
     getVertices(angle){
@@ -197,19 +292,27 @@ class Triangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color){
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
         ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
         ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+
+        const drawColor = (color === "") ? "black" : color;
+
+        if (color === "")
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -240,6 +343,7 @@ class Body{
         this.color = "";
         this.layer = 0;
 
+        // user inputs
         this.up = false;
         this.down = false;
         this.left = false;
@@ -253,12 +357,20 @@ class Body{
         this.angle = 0;
         this.angVel = 0;
         this.player = false;
+        this.collides = true;
+
+        this.images = [];
+        this.actionImage = null;
+
         BODIES.push(this);
     }
 
-    render(){
-        for (let i in this.comp){
-            this.comp[i].draw(this.color);
+    render()
+    {
+        for (let i in this.comp)
+        {
+            this.comp[i].draw(this.color, this.fill, this.images[i], this.angle,
+                this.up, this.actionImage);
         }
     }
     reposition(){
@@ -275,6 +387,27 @@ class Body{
         if (BODIES.indexOf(this) !== -1){
             BODIES.splice(BODIES.indexOf(this), 1);
         }
+    }
+
+    setCollisions(value)
+    {
+        this.collides = value;
+    }
+
+    setImages(urls)
+    {
+        for (let url of urls)
+        {
+            const image = new Image();
+            image.src = url;
+            this.images.push(image);
+        }
+    }
+
+    setActionImage(url)
+    {
+        this.actionImage = new Image();
+        this.actionImage.src = url;
     }
 }
 
@@ -342,12 +475,12 @@ class Ball extends Body{
 }
 
 class Capsule extends Body{
-    constructor(x1, y1, x2, y2, r, m){
+    constructor(x1, y1, x2, y2, r1, r2, m){
         super();
-        this.comp = [new Circle(x1, y1, r), new Circle(x2, y2, r/2)];
-        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r));
+        this.comp = [new Circle(x1, y1, r1), new Circle(x2, y2, r2)];
+        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
+        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
+        this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r1));
         this.pos = this.comp[0].pos;
         this.m = m;
         if (this.m === 0){
@@ -518,6 +651,44 @@ class Wall extends Body{
         super();
         this.comp = [new Line(x1, y1, x2, y2)];
         this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+    }
+}
+
+class LineMark extends Body{
+    constructor(x1, y1, x2, y2, color = "White")
+    {
+        super();
+        this.comp = [new Line(x1, y1, x2, y2)];
+        this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+
+        this.color = color;
+        this.collides = false;
+    }
+}
+
+class CircleMark extends Body{
+    constructor(x, y, r, color = "White")
+    {
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Circle(x, y, r)];
+
+        this.color = color;
+        this.fill = false;
+        this.collides = false;
+    }
+}
+
+class ArcMark extends Body{
+    constructor(x, y, r, a_start, a_end, color = "White")
+    {
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Arc(x, y, r, a_start, a_end)];
+
+        this.color = color;
+        this.fill = false;
+        this.collides = false;
     }
 }
 
@@ -776,7 +947,11 @@ function putWallsAround(x1, y1, x2, y2){
     let edge4 = new Wall(x1, y2, x1, y1);
 }
 
-function collide(o1, o2){
+function collide(o1, o2)
+{
+    if (!o1.collides || !o2.collides)
+        return false;
+
     let bestSat = {
         pen: null,
         axis: null,
@@ -850,4 +1025,14 @@ function mainLoop(){
 function renderOnly(){
     renderLoop();
     requestAnimationFrame(renderOnly);
+}
+
+// from https://stackoverflow.com/a/46921702
+function drawRotatedImage(context, image, w, h, angleInRad, xCenter, yCenter, dx, dy)
+{
+    context.save();
+    context.translate(xCenter, yCenter);
+    context.rotate(angleInRad);
+    context.drawImage(image, -dx, -dy, w, h);
+    context.restore();
 }

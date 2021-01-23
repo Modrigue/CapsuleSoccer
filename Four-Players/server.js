@@ -2,7 +2,7 @@ const DEPLOY = false;
 const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
 // game parameters
-const NB_PLAYERS_IN_GAME = 4;
+const NB_PLAYERS_IN_GAME = 2;
 const NB_POINTS_MATCH = 5;
 
 // pad paremeters
@@ -271,6 +271,8 @@ class Body{
         this.angle = 0;
         this.angVel = 0;
         this.player = false;
+        this.collides = true;
+
         BODIES.push(this);
     }
 
@@ -293,6 +295,11 @@ class Body{
         if (BODIES.indexOf(this) !== -1){
             BODIES.splice(BODIES.indexOf(this), 1);
         }
+    }
+
+    setCollide(value)
+    {
+        this.collides = value;
     }
 }
 
@@ -360,12 +367,12 @@ class Ball extends Body{
 }
 
 class Capsule extends Body{
-    constructor(x1, y1, x2, y2, r, m){
+    constructor(x1, y1, x2, y2, r1, r2, m){
         super();
-        this.comp = [new Circle(x1, y1, r), new Circle(x2, y2, r/2)];
-        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r));
+        this.comp = [new Circle(x1, y1, r1), new Circle(x2, y2, r2)];
+        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
+        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
+        this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r1));
         this.pos = this.comp[0].pos;
         this.m = m;
         if (this.m === 0){
@@ -536,6 +543,17 @@ class Wall extends Body{
         super();
         this.comp = [new Line(x1, y1, x2, y2)];
         this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+    }
+}
+
+class LineMark extends Body{
+    constructor(x1, y1, x2, y2, color = "White"){
+        super();
+        this.comp = [new Line(x1, y1, x2, y2)];
+        this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+
+        this.color = color;
+        this.collides = false;
     }
 }
 
@@ -794,7 +812,11 @@ function putWallsAround(x1, y1, x2, y2){
     let edge4 = new Wall(x1, y2, x1, y1);
 }
 
-function collide(o1, o2){
+function collide(o1, o2)
+{
+    if (!o1.collides || !o2.collides)
+        return false;
+
     let bestSat = {
         pen: null,
         axis: null,
@@ -916,7 +938,7 @@ function connected(socket)
         {
             // creating player 1
             const xPad = 115;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
@@ -932,7 +954,7 @@ function connected(socket)
         {
             // creating player 2
             const xPad = 525;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
@@ -948,7 +970,7 @@ function connected(socket)
         {
             // creating player 3
             const xPad = 115;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
@@ -964,7 +986,7 @@ function connected(socket)
         {
             // creating player <NB_PLAYERS_IN_GAME>
             const xPad = 525;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, PAD_MASS);
+            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
             serverBalls[socket.id].maxSpeed = 4;
             serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
             serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
@@ -1166,6 +1188,7 @@ function roundSetup(room)
 
 function buildStadium()
 {
+    // Top / bottom walls
     new Wall(60, 80, 580, 80);
     new Wall(60, 460, 580, 460);
 
