@@ -56,12 +56,19 @@ socket.on('updateConnections', player => {
 
     if(clientBalls[player.id] === undefined)
     {
-        clientBalls[player.id] = new Capsule(player.x + PAD_LENGTH/2, player.y, player.x - PAD_LENGTH/2, player.y, 25, 10);
+        clientBalls[player.id] = new Capsule(player.x + PAD_LENGTH/2, player.y, player.x - PAD_LENGTH/2, player.y, 25, 0, 10);
         clientBalls[player.id].maxSpeed = 4;
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
 
         clientBalls[player.id].color = PLAYERS_COLORS[player.no - 1];
+
+        const side = (clientBalls[player.id].no % 2 == 0) ? "right" : "left";
+        const color = clientBalls[player.id].color.toLowerCase();
+        clientBalls[player.id].setImages(
+            [`img/missile-${side}-${color}-body-128.png`,
+             `img/missile-${side}-${color}-head-128.png`]
+        );
 
         if(player.id === selfID)
         {
@@ -95,7 +102,7 @@ socket.on('updateFootball', footballParams => {
     {
         football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
         football.color = "blue";
-        football.setImage("./img/blue-sphere-128.png");
+        football.setImages(["./img/blue-sphere-128.png"]);
     }
     else
     {

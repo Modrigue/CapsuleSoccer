@@ -98,7 +98,7 @@ class Line{
         this.pos = new Vector((this.vertex[0].x+this.vertex[1].x)/2, (this.vertex[0].y+this.vertex[1].y)/2);
     }
 
-    draw(color, fill = true, image = null)
+    draw(color, fill = true, image = null, angle = 0)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -122,7 +122,7 @@ class Circle{
         this.r = r;
     }
 
-    draw(color, fill = true, image = null)
+    draw(color, fill = true, image = null, angle = 0)
     {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
@@ -130,7 +130,11 @@ class Circle{
 
         if (image !== null)
         {
-            ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+            if (angle == 0)
+                ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+            else
+                drawRotatedImage(ctx, image, 2*this.r, 2*this.r, angle,
+                    this.pos.x, this.pos.y, this.r, this.r);
         }
         else if (!fill)
         {
@@ -157,7 +161,7 @@ class Arc{
         this.angle_end = a_end;
     }
 
-    draw(color, fill = true, image = null)
+    draw(color, fill = true, image = null, angle = 0)
     {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
@@ -193,31 +197,54 @@ class Rectangle{
         this.pos = this.vertex[0].add(this.dir.mult(this.length/2)).add(this.dir.normal().mult(this.width/2));
         this.angle = 0;
         this.rotMat = new Matrix(2,2);
+
+        this.xy1 = new Vector(x1, y1);
+        this.xy2 = new Vector(x2, y2 + w);
     }
 
-    draw(color, fill = true, image = null)
+    draw(color, fill = true, image = null, angle = 0)
     {
-        ctx.beginPath();
-        ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
-        ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
-        ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
-        ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
-        ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-
-        const drawColor = (color === "") ? "black" : color;
-
-        if (!fill)
+        if (image !== null)
         {
-            ctx.strokeStyle = drawColor;
-            ctx.stroke();
+            const xLength = this.xy2.x - this.xy1.x;
+            const yLength = this.xy2.y - this.xy1.y;
+
+            if (angle == 0)
+                ctx.drawImage(image, 
+                    this.pos.x - xLength/2,  this.pos.y - yLength/2,
+                    xLength, yLength);
+            else
+                drawRotatedImage(ctx, image,
+                    xLength, yLength,
+                    angle,
+                    this.pos.x, this.pos.y,
+                    xLength/2, yLength/2
+                );
         }
         else
         {
-            ctx.fillStyle = drawColor;
-            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
+            ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
+            ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
+            ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
+            ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
+    
+            const drawColor = (color === "") ? "black" : color;
+
+            if (!fill)
+            {
+                ctx.strokeStyle = drawColor;
+                ctx.stroke();
+            }
+            else
+            {
+                ctx.fillStyle = drawColor;
+                ctx.fill();
+            }
+            ctx.fillStyle = "";
+            ctx.closePath();
         }
-        ctx.fillStyle = "";
-        ctx.closePath();
     }
 
     getVertices(angle){
@@ -247,7 +274,7 @@ class Triangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color, fill = true, image = null)
+    draw(color, fill = true, image = null, angle = 0)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -298,6 +325,7 @@ class Body{
         this.color = "";
         this.layer = 0;
 
+        // user inputs
         this.up = false;
         this.down = false;
         this.left = false;
@@ -313,14 +341,16 @@ class Body{
         this.player = false;
         this.collides = true;
 
-        this.image = null;
+        this.images = [];
 
         BODIES.push(this);
     }
 
-    render(){
-        for (let i in this.comp){
-            this.comp[i].draw(this.color, this.fill, this.image);
+    render()
+    {
+        for (let i in this.comp)
+        {
+            this.comp[i].draw(this.color, this.fill, this.images[i], this.angle);
         }
     }
     reposition(){
@@ -344,10 +374,14 @@ class Body{
         this.collides = value;
     }
 
-    setImage(url)
+    setImages(urls)
     {
-        this.image = new Image();
-        this.image.src = url;
+        for (let url of urls)
+        {
+            const image = new Image();
+            image.src = url;
+            this.images.push(image);
+        }
     }
 }
 
@@ -415,12 +449,12 @@ class Ball extends Body{
 }
 
 class Capsule extends Body{
-    constructor(x1, y1, x2, y2, r, m){
+    constructor(x1, y1, x2, y2, r1, r2, m){
         super();
-        this.comp = [new Circle(x1, y1, r), new Circle(x2, y2, r/2)];
-        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r));
+        this.comp = [new Circle(x1, y1, r1), new Circle(x2, y2, r2)];
+        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
+        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
+        this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r1));
         this.pos = this.comp[0].pos;
         this.m = m;
         if (this.m === 0){
@@ -965,4 +999,14 @@ function mainLoop(){
 function renderOnly(){
     renderLoop();
     requestAnimationFrame(renderOnly);
+}
+
+// from https://stackoverflow.com/a/46921702
+function drawRotatedImage(context, image, w, h, angleInRad, xCenter, yCenter, dx, dy)
+{
+    context.save();
+    context.translate(xCenter, yCenter);
+    context.rotate(angleInRad);
+    context.drawImage(image, -dx, -dy, w, h);
+    context.restore();
 }
