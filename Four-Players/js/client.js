@@ -1,4 +1,4 @@
-const DEPLOY = false;
+const DEPLOY = true;
 
 const PORT = DEPLOY ? 13000 : 5500;
 let socket;
@@ -106,12 +106,17 @@ socket.on('updateFootball', footballParams => {
     if(football === undefined)
     {
         football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
+        /*football = new Capsule(
+            footballParams.x - 30, footballParams.y,
+            footballParams.x + 30, footballParams.y,
+            BALL_RADIUS, BALL_RADIUS, BALL_MASS
+        );*/
         football.color = "blue";
         football.setImages([BALL_IMG]);
     }
     else
     {
-        football.setPosition(footballParams.x, footballParams.y);
+        football.setPosition(footballParams.x, footballParams.y, footballParams.angle);
     }
 })
 
@@ -139,7 +144,6 @@ socket.on('updateScore', scorerId => {
         {
             if (id === scorerId)
             {
-                //if(clientBalls[id].no >= 1 && clientBalls[id].no <= 2)
                 if (isNumeric(clientBalls[id].no))
                     clientBalls[id].score++;
 
@@ -188,7 +192,7 @@ function userInterface()
                 ctx.font = fontSizeScore;
                 ctx.fillStyle = "green";
                 ctx.textAlign = "right";
-                if (NB_PLAYERS_IN_GAME == 2)
+                if (NB_PLAYERS_IN_GAME == 2 || NB_PLAYERS_IN_GAME == 3)
                     ctx.fillText(clientBalls[id].score, 630, 40);
                 if(clientBalls[id].name)
                 {

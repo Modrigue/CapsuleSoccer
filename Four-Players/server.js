@@ -1,4 +1,4 @@
-const DEPLOY = false;
+const DEPLOY = true;
 const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
 // game parameters
@@ -942,6 +942,7 @@ function connected(socket)
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
 
     const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
+    const clientNoMod = (clientNo % NB_PLAYERS_IN_GAME);
 
     switch (clientNo % NB_PLAYERS_IN_GAME)
     {
@@ -993,27 +994,53 @@ function connected(socket)
             break;
         }
 
-        case 0:
+        case 0 /*NB_PLAYERS_IN_GAME*/:
         {
             // creating player <NB_PLAYERS_IN_GAME>
-            const xPad = 525;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-            serverBalls[socket.id].maxSpeed = 4;
-            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-            serverBalls[socket.id].score = 0;
-            serverBalls[socket.id].no = NB_PLAYERS_IN_GAME;
-            serverBalls[socket.id].angle = 0; // face left
-            serverBalls[socket.id].layer = roomNo;
-            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
-
-            football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
-            football[roomNo].layer = roomNo;
-            io.emit('updateBallRadius', BALL_RADIUS);
-            io.emit('updateBallMass', BALL_MASS);
-            io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y, r: BALL_RADIUS});
+            if (NB_PLAYERS_IN_GAME % 2 == 1)
+            {
+                const xPad = 115;
+                serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
+                serverBalls[socket.id].maxSpeed = 4;
+                serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+                serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+                serverBalls[socket.id].score = 0;
+                serverBalls[socket.id].no = NB_PLAYERS_IN_GAME;
+                serverBalls[socket.id].angle = Math.PI; // face right
+                serverBalls[socket.id].layer = roomNo;
+                playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 + yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};    
+            }
+            else
+            {
+                const xPad = 525;
+                serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
+                serverBalls[socket.id].maxSpeed = 4;
+                serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
+                serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+                serverBalls[socket.id].score = 0;
+                serverBalls[socket.id].no = NB_PLAYERS_IN_GAME;
+                serverBalls[socket.id].angle = 0; // face left
+                serverBalls[socket.id].layer = roomNo;
+                playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
+            }
             break;
         }
+    }
+
+    // create ball if all ball present
+    if (clientNoMod == 0)
+    {
+        football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
+        // football[roomNo] = new Capsule(
+        //     320 - 30, 270,
+        //     320 + 30, 270,
+        //     BALL_RADIUS, BALL_RADIUS, BALL_MASS
+        // );
+        football[roomNo].layer = roomNo;
+        io.emit('updateBallRadius', BALL_RADIUS);
+        io.emit('updateBallMass', BALL_MASS);
+        io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y,
+            r: BALL_RADIUS, angle: football[roomNo].angle});
     }
 
     for (let id in serverBalls)
@@ -1022,7 +1049,7 @@ function connected(socket)
     }
 
     socket.on('disconnect', function(){
-        if(football[serverBalls[socket.id].layer])
+        if(serverBalls[socket.id] !== undefined && football[serverBalls[socket.id].layer])
         {
             football[serverBalls[socket.id].layer].remove();
             delete football[football[serverBalls[socket.id].layer]];
@@ -1091,7 +1118,8 @@ function serverLoop(){
             io.to(room).emit('updateFootball', {
                 x: football[room].pos.x,
                 y: football[room].pos.y,
-                r: BALL_RADIUS
+                r: BALL_RADIUS,
+                angle: football[room].angle
             });
         } else {
             //console.log("waiting for n players...");
@@ -1126,8 +1154,11 @@ function scoring(room){
     let scorerId;
     if(football[room].pos.x < 45)
     {
-        for(let id in serverBalls){
-            if (serverBalls[id].no === NB_PLAYERS_IN_GAME && serverBalls[id].layer === room){
+        for(let id in serverBalls)
+        {
+            const rightTeamPlayerNo = (NB_PLAYERS_IN_GAME == 3) ? 2 : NB_PLAYERS_IN_GAME;
+
+            if (serverBalls[id].no === rightTeamPlayerNo && serverBalls[id].layer === room){
                 serverBalls[id].score++;
                 scorerId = id;
                 console.log("score for team 2!");
@@ -1156,32 +1187,23 @@ function roundSetup(room)
     {        
         if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
         {
-            switch(serverBalls[id].no)
-            {
-                case 1:
-                    serverBalls[id].vel.set(0, 0);
-                    serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(115, 270 - yPadDiff/2, Math.PI);
-                    break;
+            serverBalls[id].vel.set(0, 0);
+            serverBalls[id].angVel = 0;
 
-                case 2:
-                    serverBalls[id].vel.set(0, 0);
-                    serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(525, 270 + yPadDiff/2, 0);
-                    break;
+            const xStart = (serverBalls[id].no % 2 == 0) ? 525 : 115;
 
-                case 3:
-                    serverBalls[id].vel.set(0, 0);
-                    serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(115, 270 + yPadDiff/2, Math.PI);
-                    break;
+            let ySign = 1;
+            if (NB_PLAYERS_IN_GAME == 3 && serverBalls[id].no == 2)
+                ySign = 0;
+            else if (serverBalls[id].no == 1
+                || (NB_PLAYERS_IN_GAME == 4 && serverBalls[id].no == NB_PLAYERS_IN_GAME))
+                ySign = -1;
+            const yStart = 270 + ySign*yPadDiff/2;
+            //console.log('PLAYER ', serverBalls[id].no, yStart);
 
-                case NB_PLAYERS_IN_GAME:
-                    serverBalls[id].vel.set(0, 0);
-                    serverBalls[id].angVel = 0;
-                    serverBalls[id].setPosition(525, 270 - yPadDiff/2, 0);
-                    break;
-            }
+            const orientation = (serverBalls[id].no % 2 == 0) ? 0 : Math.PI;
+            
+            serverBalls[id].setPosition(xStart, yStart, orientation);
         }
     }
 
