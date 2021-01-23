@@ -64,18 +64,21 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].angle = Math.PI; // corrects render while waiting
         clientBalls[player.id].color = PLAYERS_COLORS[player.no - 1];
 
-        const side = (clientBalls[player.id].no % 2 == 0) ? "right" : "left";
-        const color = clientBalls[player.id].color.toLowerCase();
-        clientBalls[player.id].setImages(
-            [`img/missile-${side}-${color}-body-128.png`,
-             `img/missile-${side}-${color}-head-128.png`]
-        );
-        clientBalls[player.id].setActionImage(`img/missile-${side}-fire-128.png`);
+        if (player.id !== undefined)
+        {
+            const side = (clientBalls[player.id].no % 2 == 0) ? "right" : "left";
+            const color = clientBalls[player.id].color.toLowerCase();
+            clientBalls[player.id].setImages(
+                [`img/missile-${side}-${color}-body-128.png`,
+                `img/missile-${side}-${color}-head-128.png`]
+            );
+            clientBalls[player.id].setActionImage(`img/missile-${side}-fire-128.png`);
+        }
 
         if(player.id === selfID)
         {
             document.getElementById('playerWelcome').innerHTML =
-                `Hi, enter your nickname and start to play (in room no.${player.roomNo})`
+                `Hi, enter your name and start to play (in room no.${player.roomNo})`
             userInput(clientBalls[player.id]);
         }
     }
