@@ -61,7 +61,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].maxSpeed = 4;
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
-
+        clientBalls[player.id].angle = Math.PI; // corrects render while waiting
         clientBalls[player.id].color = PLAYERS_COLORS[player.no - 1];
 
         const side = (clientBalls[player.id].no % 2 == 0) ? "right" : "left";
