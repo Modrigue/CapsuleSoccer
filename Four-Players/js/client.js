@@ -78,7 +78,7 @@ socket.on('updateConnections', player => {
         if(player.id === selfID)
         {
             document.getElementById('playerWelcome').innerHTML =
-                `Hi, enter your name and start to play (in room no.${player.roomNo})`
+                `Hi, enter your name and start to play (Room no.${player.roomNo}) - ${NB_PLAYERS_IN_GAME} players`
             userInput(clientBalls[player.id]);
         }
     }
