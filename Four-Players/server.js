@@ -1023,7 +1023,7 @@ function connected(socket)
         console.log(playerReg);
         console.log(`Number of players: ${Object.keys(playerReg).length}`)
         console.log(`Number of balls: ${Object.keys(football).length}`)
-        console.log(`Number of BODIES: ${BODIES.length-12}`);
+        //console.log(`Number of BODIES: ${BODIES.length-12}`);
         console.log(`Joined players ever: ${clientNo}`)
         io.emit('updateConnections', playerReg);
     })
@@ -1031,7 +1031,7 @@ function connected(socket)
     console.log(playerReg);
         console.log(`Number of players: ${Object.keys(playerReg).length}`)
         console.log(`Number of balls: ${Object.keys(football).length}`)
-        console.log(`Number of BODIES: ${BODIES.length-12}`);
+        //console.log(`Number of BODIES: ${BODIES.length-12}`);
         console.log(`Joined players ever: ${clientNo}`)
 
     socket.on('userCommands', data => {
