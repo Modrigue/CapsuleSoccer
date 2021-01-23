@@ -297,35 +297,6 @@ class Body{
         }
     }
 
-    setCollide(value)
-    {
-        this.collides = value;
-    }
-}
-
-class Ball extends Body{
-    constructor(x, y, r, m){
-        super();
-        this.pos = new Vector(x, y);
-        this.comp = [new Circle(x, y, r)];
-        this.m = m;
-        if (this.m === 0){
-            this.inv_m = 0;
-        } else {
-            this.inv_m = 1 / this.m;
-        }
-    }
-
-    setPosition(x, y, a = this.angle){
-        this.pos.set(x, y);
-        this.comp[0].pos = this.pos;
-    }
-
-    setRadius(r)
-    {
-        this.comp[0].r = r;
-    }
-
     setMass(m)
     {
         this.m = m;
@@ -337,6 +308,30 @@ class Ball extends Body{
         {
             this.inv_m = 1 / this.m;
         }
+    }
+
+    setCollide(value)
+    {
+        this.collides = value;
+    }
+}
+
+class Ball extends Body{
+    constructor(x, y, r, m){
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Circle(x, y, r)];
+        this.setMass(m);
+    }
+
+    setPosition(x, y, a = this.angle){
+        this.pos.set(x, y);
+        this.comp[0].pos = this.pos;
+    }
+
+    setRadius(r)
+    {
+        this.comp[0].r = r;
     }
 
     reposition(){
@@ -374,18 +369,7 @@ class Capsule extends Body{
         let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r1));
         this.comp.unshift(new Rectangle(recV1.x, recV1.y, recV2.x, recV2.y, 2*r1));
         this.pos = this.comp[0].pos;
-        this.m = m;
-        if (this.m === 0){
-            this.inv_m = 0;
-        } else {
-            this.inv_m = 1 / this.m;
-        }
-        this.inertia = this.m * ((2*this.comp[0].width)**2 +(this.comp[0].length+2*this.comp[0].width)**2) / 12;
-        if (this.m === 0){
-            this.inv_inertia = 0;
-        } else {
-            this.inv_inertia = 1 / this.inertia;
-        }
+        this.setMass(m);
     }
 
     keyControl(){
@@ -416,6 +400,28 @@ class Capsule extends Body{
         this.angle += this.angVel;
     }
 
+    setRadius(r)
+    {
+        for (let comp of this.comp)
+        {
+            if (comp instanceof Circle)
+                comp.r = r;
+            else if (comp instanceof Rectangle)
+                comp.width = 2*r;
+        }
+    }
+
+    setMass(m)
+    {
+        super.setMass(m);
+        this.inertia = this.m * ((2*this.comp[0].width)**2 +(this.comp[0].length+2*this.comp[0].width)**2) / 12;
+        if (this.m === 0){
+            this.inv_inertia = 0;
+        } else {
+            this.inv_inertia = 1 / this.inertia;
+        }
+    }
+
     reposition(){
         super.reposition();
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
@@ -427,18 +433,7 @@ class Box extends Body{
         super();
         this.comp = [new Rectangle(x1, y1, x2, y2, w)];
         this.pos = this.comp[0].pos;
-        this.m = m;
-        if (this.m === 0){
-            this.inv_m = 0;
-        } else {
-            this.inv_m = 1 / this.m;
-        }
-        this.inertia = this.m * (this.comp[0].width**2 +this.comp[0].length**2) / 12;
-        if (this.m === 0){
-            this.inv_inertia = 0;
-        } else {
-            this.inv_inertia = 1 / this.inertia;
-        }
+        this.setMass(m);
     }
 
     keyControl(){
@@ -467,13 +462,24 @@ class Box extends Body{
         this.angle += this.angVel;
     }
 
+    setMass(m)
+    {
+        super.setMass(m);
+        this.inertia = this.m * (this.comp[0].width**2 +this.comp[0].length**2) / 12;
+        if (this.m === 0){
+            this.inv_inertia = 0;
+        } else {
+            this.inv_inertia = 1 / this.inertia;
+        }
+    }
+
     reposition(){
         super.reposition();
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
     }
 }
 
-class Star extends Body{
+class Star6 extends Body{
     constructor(x1, y1, r, m){
         super();
         this.comp = [];
@@ -490,18 +496,7 @@ class Star extends Body{
         this.comp.push(new Triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y));
         this.pos = this.comp[0].pos;
         
-        this.m = m;
-        if (this.m === 0){
-            this.inv_m = 0;
-        } else {
-            this.inv_m = 1 / this.m;
-        }
-        this.inertia = this.m * ((2*this.r)**2) / 12;
-        if (this.m === 0){
-            this.inv_inertia = 0;
-        } else {
-            this.inv_inertia = 1 / this.inertia;
-        }
+        this.setMass(m);
     }
 
     keyControl(){
@@ -530,6 +525,22 @@ class Star extends Body{
         this.comp[0].getVertices(this.angle + this.angVel);
         this.comp[1].getVertices(this.angle + this.angVel);
         this.angle += this.angVel;
+    }
+
+    setRadius(r)
+    {
+        // TODO
+    }
+
+    setMass(m)
+    {
+        super.setMass(m);
+        this.inertia = this.m * ((2*this.r)**2) / 12;
+        if (this.m === 0){
+            this.inv_inertia = 0;
+        } else {
+            this.inv_inertia = 1 / this.inertia;
+        }
     }
 
     reposition(){
