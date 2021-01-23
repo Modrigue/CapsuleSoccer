@@ -20,6 +20,7 @@ const PAD_LENGTH = 50;
 
 let BALL_RADIUS = 20;
 let BALL_MASS = 10;
+const BALL_IMG = "./img/blue-ball-128.png";
 
 const PLAYERS_COLORS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
 const MARK_COLOR = "LightSkyBlue";
@@ -102,7 +103,7 @@ socket.on('updateFootball', footballParams => {
     {
         football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
         football.color = "blue";
-        football.setImages(["./img/blue-sphere-128.png"]);
+        football.setImages([BALL_IMG]);
     }
     else
     {
