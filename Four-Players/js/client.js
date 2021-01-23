@@ -70,6 +70,7 @@ socket.on('updateConnections', player => {
             [`img/missile-${side}-${color}-body-128.png`,
              `img/missile-${side}-${color}-head-128.png`]
         );
+        clientBalls[player.id].setActionImage(`img/missile-${side}-fire-128.png`);
 
         if(player.id === selfID)
         {

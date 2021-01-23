@@ -98,7 +98,7 @@ class Line{
         this.pos = new Vector((this.vertex[0].x+this.vertex[1].x)/2, (this.vertex[0].y+this.vertex[1].y)/2);
     }
 
-    draw(color, fill = true, image = null, angle = 0)
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -122,7 +122,7 @@ class Circle{
         this.r = r;
     }
 
-    draw(color, fill = true, image = null, angle = 0)
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
     {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
@@ -161,7 +161,7 @@ class Arc{
         this.angle_end = a_end;
     }
 
-    draw(color, fill = true, image = null, angle = 0)
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
     {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
@@ -202,7 +202,7 @@ class Rectangle{
         this.xy2 = new Vector(x2, y2 + w);
     }
 
-    draw(color, fill = true, image = null, angle = 0)
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
     {
         if (image !== null)
         {
@@ -245,6 +245,24 @@ class Rectangle{
             ctx.fillStyle = "";
             ctx.closePath();
         }
+
+        if (action && actionImage !== null)
+        {
+            const xLength = 145; // specific
+            const yLength = this.xy2.y - this.xy1.y;
+
+            if (angle == 0)
+                ctx.drawImage(actionImage, 
+                    this.pos.x - xLength/2,  this.pos.y - yLength/2,
+                    xLength, yLength);
+            else
+                drawRotatedImage(ctx, actionImage,
+                    xLength, yLength,
+                    angle,
+                    this.pos.x, this.pos.y,
+                    xLength/2, yLength/2
+                );
+        }
     }
 
     getVertices(angle){
@@ -274,7 +292,7 @@ class Triangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color, fill = true, image = null, angle = 0)
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
     {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
@@ -342,6 +360,7 @@ class Body{
         this.collides = true;
 
         this.images = [];
+        this.actionImage = null;
 
         BODIES.push(this);
     }
@@ -350,7 +369,8 @@ class Body{
     {
         for (let i in this.comp)
         {
-            this.comp[i].draw(this.color, this.fill, this.images[i], this.angle);
+            this.comp[i].draw(this.color, this.fill, this.images[i], this.angle,
+                this.up, this.actionImage);
         }
     }
     reposition(){
@@ -382,6 +402,12 @@ class Body{
             image.src = url;
             this.images.push(image);
         }
+    }
+
+    setActionImage(url)
+    {
+        this.actionImage = new Image();
+        this.actionImage.src = url;
     }
 }
 
