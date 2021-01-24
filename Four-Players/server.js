@@ -1156,9 +1156,9 @@ function scoring(room){
     {
         for(let id in serverBalls)
         {
-            const rightTeamPlayerNo = (NB_PLAYERS_IN_GAME == 3) ? 2 : NB_PLAYERS_IN_GAME;
-
-            if (serverBalls[id].no === rightTeamPlayerNo && serverBalls[id].layer === room){
+            const rightTeamPlayerNo = 2 * Math.floor(NB_PLAYERS_IN_GAME / 2);
+            if (serverBalls[id].no === rightTeamPlayerNo && serverBalls[id].layer === room)
+            {
                 serverBalls[id].score++;
                 scorerId = id;
                 console.log("score for team 2!");
@@ -1168,7 +1168,8 @@ function scoring(room){
     if(football[room].pos.x > 595)
     {
         for(let id in serverBalls){
-            if (serverBalls[id].no === 1 && serverBalls[id].layer === room){
+            if (serverBalls[id].no === 1 && serverBalls[id].layer === room)
+            {
                 serverBalls[id].score++;
                 scorerId = id;
                 console.log("score for team 1!");
