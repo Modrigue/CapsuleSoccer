@@ -659,10 +659,13 @@ class Star6 extends Body{
 }
 
 class Wall extends Body{
-    constructor(x1, y1, x2, y2){
+    constructor(x1, y1, x2, y2, color = "Black")
+    {
         super();
         this.comp = [new Line(x1, y1, x2, y2)];
         this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+
+        this.color = color;
     }
 }
 

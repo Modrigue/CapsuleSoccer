@@ -10,8 +10,9 @@ let BALL_RADIUS = 20;
 let BALL_MASS = 10;
 const BALL_IMG = "./img/blue-ball-128.png";
 
-const PLAYERS_COLORS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
-const MARK_COLOR = "LightSkyBlue";
+const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
+const COLOR_WALL = "DodgerBlue";
+const COLOR_MARk = "MediumBlue";
 
 
 let socket;
@@ -63,7 +64,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
         clientBalls[player.id].angle = Math.PI; // corrects render while waiting
-        clientBalls[player.id].color = PLAYERS_COLORS[player.no - 1];
+        clientBalls[player.id].color = COLORS_PLAYERS[player.no - 1];
 
         if (player.id !== undefined)
         {
@@ -191,7 +192,7 @@ function userInterface()
         // display player name
         if(clientBalls[id].name)
             ctx.font = fontSizeName;
-        ctx.fillStyle = PLAYERS_COLORS[clientBalls[id].no - 1];
+        ctx.fillStyle = COLORS_PLAYERS[clientBalls[id].no - 1];
         const xPos = (clientBalls[id].no % 2 == 0) ? 580 : 60;
         const yPos = 25 + 25 * Math.floor((clientBalls[id].no - 1) / 2);
         const nameText = (clientBalls[id].name) ? clientBalls[id].name : ""
@@ -202,28 +203,28 @@ function userInterface()
 function buildStadium()
 {
     // Marks
-    new LineMark(60, 180, 60, 360, MARK_COLOR);
-    new LineMark(320, 81, 320, 459, MARK_COLOR);
-    new LineMark(580, 180, 580, 360, MARK_COLOR);
-    new CircleMark(320, 270, 60, MARK_COLOR);
-    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, MARK_COLOR);
-    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, MARK_COLOR);
+    new LineMark(60, 180, 60, 360, COLOR_MARk);
+    new LineMark(320, 81, 320, 459, COLOR_MARk);
+    new LineMark(580, 180, 580, 360, COLOR_MARk);
+    new CircleMark(320, 270, 60, COLOR_MARk);
+    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARk);
+    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARk);
 
     // Top / bottom walls
-    new Wall(60, 80, 580, 80);
-    new Wall(60, 460, 580, 460);
+    new Wall(60, 80, 580, 80, COLOR_WALL);
+    new Wall(60, 460, 580, 460, COLOR_WALL);
 
-    new Wall(60, 80, 60, 180);
-    new Wall(60, 460, 60, 360);
-    new Wall(580, 80, 580, 180);
-    new Wall(580, 460, 580, 360);
+    new Wall(60, 80, 60, 180, COLOR_WALL);
+    new Wall(60, 460, 60, 360, COLOR_WALL);
+    new Wall(580, 80, 580, 180, COLOR_WALL);
+    new Wall(580, 460, 580, 360, COLOR_WALL);
 
-    new Wall(50, 360, 10, 360);
-    new Wall(0, 360, 0, 180);
-    new Wall(10, 180, 50, 180);
-    new Wall(590, 360, 630, 360);
-    new Wall(640, 360, 640, 180);
-    new Wall(630, 180, 590, 180);
+    new Wall(50, 360, 10, 360, COLOR_WALL);
+    new Wall(0, 360, 0, 180, COLOR_WALL);
+    new Wall(10, 180, 50, 180, COLOR_WALL);
+    new Wall(590, 360, 630, 360, COLOR_WALL);
+    new Wall(640, 360, 640, 180, COLOR_WALL);
+    new Wall(630, 180, 590, 180, COLOR_WALL);
 }
 
 form.onsubmit = function(e)
