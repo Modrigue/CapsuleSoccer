@@ -104,8 +104,6 @@ socket.on('updateFootball', footballParams => {
         football = new Ball(footballParams.x, footballParams.y, footballParams.r, footballParams.m);
         football.color = "blue";
         football.setImages([BALL_IMG]);
-        console.log(football.m);
-        
     }
     else
     {
