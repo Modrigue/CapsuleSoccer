@@ -13,8 +13,13 @@ const PAD_LENGTH = 50;
 const PAD_MASS = 10;
 
 // ball paremeters
-let BALL_RADIUS = newRandomBallRadius();
+const BALL_TYPES = {
+    BALL: 'ball',
+    CAPSULE: 'capsule'
+}
+let BALL_RADIUS = newRandomBallRadius(BALL_TYPES.BALL);
 let BALL_MASS = newRandomBallMass();
+const BALL_CAPSULE_LENGTH = 60;
 
 const BODIES = [];
 const COLLISIONS = [];
@@ -957,16 +962,9 @@ function connected(socket)
     if (clientNoInRoom == NB_PLAYERS_IN_GAME)
     {
         football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
-        // football[roomNo] = new Capsule(
-        //     320 - 30, 270,
-        //     320 + 30, 270,
-        //     BALL_RADIUS, BALL_RADIUS, BALL_MASS
-        // );
         football[roomNo].layer = roomNo;
-        io.emit('updateBallRadius', BALL_RADIUS);
-        io.emit('updateBallMass', BALL_MASS);
         io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y,
-            r: BALL_RADIUS, angle: football[roomNo].angle});
+            r: BALL_RADIUS, m: BALL_MASS, angle: football[roomNo].angle});
     }
 
     for (let id in serverBalls)
@@ -1113,16 +1111,16 @@ function roundSetup(room)
         if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
             initPlayerPosition(id);
 
-    // generate new random ball parameters
-    BALL_RADIUS = newRandomBallRadius()
-    BALL_MASS = newRandomBallMass();
-    football[room].pos.set(320, 270);
-    football[room].vel.set(0, 0);
-    football[room].setRadius(BALL_RADIUS);
-    football[room].setMass(BALL_MASS);
-    io.emit('updateBallRadius', BALL_RADIUS);
-    io.emit('updateBallMass', BALL_MASS);
-    io.emit('newRound');
+    // generate new random ball
+    football[room].remove();
+    football[room] = newRandomBall();
+    io.emit('newRound', {
+        type: (football[room] instanceof Capsule) ? BALL_TYPES.CAPSULE : BALL_TYPES.ball,
+        x: football[room].pos.x,
+        y: football[room].pos.y,
+        r: BALL_RADIUS,
+        m: BALL_MASS
+    });
 }
 
 function initPlayerPosition(id)
@@ -1189,10 +1187,46 @@ function playersReadyInRoom(room)
     return pno;
 }
 
-function newRandomBallRadius()
+function newRandomBall()
 {
-    const BALL_RADIUS_MIN = 10;
-    const BALL_RADIUS_MAX = 40;
+    const ballTypeNumber = Math.floor(3*Math.random());
+    const ballType = (ballTypeNumber == 2) ? BALL_TYPES.CAPSULE : BALL_TYPES.BALL;
+
+    BALL_RADIUS = newRandomBallRadius(ballType)
+    BALL_MASS = newRandomBallMass();
+
+    let ball;
+    switch(ballType)
+    {
+        case BALL_TYPES.BALL:
+            ball = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
+            break;
+        
+        case BALL_TYPES.CAPSULE:
+            ball = new Capsule(
+                320 - BALL_CAPSULE_LENGTH/2, 270,
+                320 + BALL_CAPSULE_LENGTH/2, 270,
+                BALL_RADIUS, BALL_RADIUS, BALL_MASS
+            );
+            break;
+    }
+
+    ball.pos.set(320, 270);
+    ball.vel.set(0, 0);
+
+    return ball;
+}
+
+function newRandomBallRadius(ballType)
+{
+    let BALL_RADIUS_MIN = 10;
+    let BALL_RADIUS_MAX = 40;
+    if (ballType == BALL_TYPES.CAPSULE)
+    {
+        BALL_RADIUS_MIN = 5;
+        BALL_RADIUS_MAX = 20; 
+    }
+
 
     return Math.floor(BALL_RADIUS_MIN + (BALL_RADIUS_MAX - BALL_RADIUS_MIN)*Math.random());
 }

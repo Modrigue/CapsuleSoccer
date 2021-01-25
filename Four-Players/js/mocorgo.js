@@ -1051,3 +1051,8 @@ function drawRotatedImage(context, image, w, h, angleInRad, xCenter, yCenter, dx
     context.drawImage(image, -dx, -dy, w, h);
     context.restore();
 }
+
+const BALL_TYPES = {
+    BALL: 'ball',
+    CAPSULE: 'capsule'
+}

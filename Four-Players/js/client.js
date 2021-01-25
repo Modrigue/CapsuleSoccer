@@ -5,14 +5,14 @@ let NB_PLAYERS_IN_GAME = 2;
 let NB_POINTS_MATCH = 5;
 
 const PAD_LENGTH = 50;
+const BALL_CAPSULE_LENGTH = 60;
 
-let BALL_RADIUS = 20;
-let BALL_MASS = 10;
 const BALL_IMG = "./img/blue-ball-128.png";
+const BALL_CAPSULE_IMGS = ["./img/blue-pill-body-128.png", "./img/blue-pill-right-128.png", "./img/blue-pill-left-128.png"];
 
 const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
 const COLOR_WALL = "DodgerBlue";
-const COLOR_MARk = "MediumBlue";
+const COLOR_MARK = "MediumBlue";
 
 
 let socket;
@@ -38,20 +38,6 @@ socket.on('connect', () => {
 
 socket.on('setNbPointsMatch', nbPoints => {
     NB_POINTS_MATCH = nbPoints;
-})
-
-socket.on('updateBallRadius', ballRadius => {
-    BALL_RADIUS = ballRadius;
-    
-    if (football !== undefined)
-        football.setRadius(BALL_RADIUS);
-})
-
-socket.on('updateBallMass', ballMass => {
-    BALL_MASS = ballMass;
-
-    if (football !== undefined)
-        football.setMass(BALL_MASS);
 })
 
 socket.on('updateConnections', player => {
@@ -105,21 +91,21 @@ socket.on('playerName', data => {
     clientBalls[data.id].name = data.name;
 })
 
-socket.on('newRound', () => {
-    //
+socket.on('newRound', footballParams => {
+    if(football !== undefined)
+        football.remove();
+
+    football = createFootball(footballParams);
 })
 
 socket.on('updateFootball', footballParams => {
     if(football === undefined)
     {
-        football = new Ball(footballParams.x, footballParams.y, BALL_RADIUS, BALL_MASS);
-        /*football = new Capsule(
-            footballParams.x - 30, footballParams.y,
-            footballParams.x + 30, footballParams.y,
-            BALL_RADIUS, BALL_RADIUS, BALL_MASS
-        );*/
+        football = new Ball(footballParams.x, footballParams.y, footballParams.r, footballParams.m);
         football.color = "blue";
         football.setImages([BALL_IMG]);
+        console.log(football.m);
+        
     }
     else
     {
@@ -203,12 +189,12 @@ function userInterface()
 function buildStadium()
 {
     // Marks
-    new LineMark(60, 180, 60, 360, COLOR_MARk);
-    new LineMark(320, 81, 320, 459, COLOR_MARk);
-    new LineMark(580, 180, 580, 360, COLOR_MARk);
-    new CircleMark(320, 270, 60, COLOR_MARk);
-    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARk);
-    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARk);
+    new LineMark(60, 180, 60, 360, COLOR_MARK);
+    new LineMark(320, 81, 320, 459, COLOR_MARK);
+    new LineMark(580, 180, 580, 360, COLOR_MARK);
+    new CircleMark(320, 270, 60, COLOR_MARK);
+    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
 
     // Top / bottom walls
     new Wall(60, 80, 580, 80, COLOR_WALL);
@@ -225,6 +211,34 @@ function buildStadium()
     new Wall(590, 360, 630, 360, COLOR_WALL);
     new Wall(640, 360, 640, 180, COLOR_WALL);
     new Wall(630, 180, 590, 180, COLOR_WALL);
+}
+
+function createFootball(footballParams)
+{
+    let ball;
+    switch(footballParams.type)
+    {
+        case BALL_TYPES.ball:
+            ball = new Ball(320, 270, footballParams.r, footballParams.m);
+            ball.color = "blue";
+            ball.setImages([BALL_IMG]);
+            break;
+        
+        case BALL_TYPES.CAPSULE:
+            ball = new Capsule(
+                320 - BALL_CAPSULE_LENGTH/2, 270,
+                320 + BALL_CAPSULE_LENGTH/2, 270,
+                footballParams.r, footballParams.r, footballParams.m
+            );
+            ball.color = "blue";
+            ball.setImages(BALL_CAPSULE_IMGS);
+            break;
+    }
+
+    ball.pos.set(320, 270);
+    ball.vel.set(0, 0);
+
+    return ball;
 }
 
 form.onsubmit = function(e)
