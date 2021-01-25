@@ -1182,31 +1182,10 @@ function scoring(room){
 
 function roundSetup(room)
 {
-    const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
-
-    for(let id in serverBalls)
-    {        
+    // reset players position
+    for(let id in serverBalls)      
         if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
-        {
-            serverBalls[id].vel.set(0, 0);
-            serverBalls[id].angVel = 0;
-
-            const xStart = (serverBalls[id].no % 2 == 0) ? 525 : 115;
-
-            let ySign = 1;
-            if (NB_PLAYERS_IN_GAME == 3 && serverBalls[id].no == 2)
-                ySign = 0;
-            else if (serverBalls[id].no == 1
-                || (NB_PLAYERS_IN_GAME == 4 && serverBalls[id].no == NB_PLAYERS_IN_GAME))
-                ySign = -1;
-            const yStart = 270 + ySign*yPadDiff/2;
-            //console.log('PLAYER ', serverBalls[id].no, yStart);
-
-            const orientation = (serverBalls[id].no % 2 == 0) ? 0 : Math.PI;
-            
-            serverBalls[id].setPosition(xStart, yStart, orientation);
-        }
-    }
+            initPlayerPosition(id);
 
     // generate new random ball parameters
     BALL_RADIUS = newRandomBallRadius()
@@ -1218,6 +1197,31 @@ function roundSetup(room)
     io.emit('updateBallRadius', BALL_RADIUS);
     io.emit('updateBallMass', BALL_MASS);
     io.emit('newRound');
+}
+
+function initPlayerPosition(id)
+{
+    const yPadDiff = 80;
+
+    serverBalls[id].vel.set(0, 0);
+    serverBalls[id].angVel = 0;
+
+    const teamNo = (serverBalls[id].no % 2 == 0) ? 2 : 1;
+    const nbPlayersInTeam = (teamNo == 1) ?
+        Math.ceil(NB_PLAYERS_IN_GAME / 2) :
+        Math.floor(NB_PLAYERS_IN_GAME / 2);
+    const noPlayerInTeam = Math.floor((serverBalls[id].no - 1) / 2) + 1;
+
+    const xStart = (teamNo == 1) ? 115 : 525;
+    let yMin = (nbPlayersInTeam % 2 == 0) ?
+        270 - (Math.floor(nbPlayersInTeam/2) - 0.5)*yPadDiff :
+        270 - Math.floor(nbPlayersInTeam/2)*yPadDiff;
+    const yStart = yMin + (noPlayerInTeam - 1)*yPadDiff;
+    //console.log('PLAYER ', serverBalls[id].no, noPlayerInTeam, yMin, xStart, yStart);
+
+    const orientation = (teamNo == 1) ? Math.PI : 0;
+    
+    serverBalls[id].setPosition(xStart, yStart, orientation);
 }
 
 function buildStadium()
