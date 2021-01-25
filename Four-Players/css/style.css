@@ -1,20 +1,32 @@
-#canvas{
+body
+{
+    background-color:white;
+}
+
+#canvas
+{
     border: 1px solid black;
     display: block;
     margin: 0 auto;
-    background: LightCyan;
+    background: black;
+    outline: none;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */
 }
 
-#gameArea {
+#gameArea
+{
     display: none;
 }
 
-#winning {
-    color: blue;
+#winning
+{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: dodgerblue;
     text-align: center;
 }
 
-button {
+button
+{
     background:linear-gradient(to bottom, #fe1a00 5%, #ce0100 100%);
     background-color:#fe1a00;
     border-radius:28px;
@@ -29,17 +41,20 @@ button {
     text-shadow:0px 1px 0px #b23e35;
 }
 
-button:hover {
+button:hover
+{
     background:linear-gradient(to bottom, #ce0100 5%, #fe1a00 100%);
     background-color:#ce0100;
 }
 
-button:active {
+button:active
+{
     position:relative;
     top:1px;
 }
 
-#howto {
+#howto
+{
     border: 1px solid black;
     border-radius: 5px;
     width: 40%;
@@ -47,16 +62,25 @@ button:active {
     margin: auto;
 }
 
-#userName {
+#userName
+{
     border-radius: 10px;
     height: 150%;
 }
 
-#userForm {
+#userForm
+{
     text-align: center;
 }
 
-#playerWelcome {
-    font-family: Verdana;
+.welcomeInfo
+{
+    color: Black;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 20px;
+}
+
+#playerWelcome
+{
     font-weight: bold;
 }
