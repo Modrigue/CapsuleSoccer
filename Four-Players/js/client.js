@@ -172,6 +172,12 @@ requestAnimationFrame(renderOnly);
 
 function userInterface()
 {    
+    // display title
+    ctx.font = "italic 28px Arial";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "dodgerblue";
+    ctx.fillText("Rocket Soccer", 320, 30);
+
     for (let id in clientBalls)
     {
         const fontSizeScore = "48px Arial";
