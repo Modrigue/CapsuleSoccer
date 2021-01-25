@@ -2,7 +2,7 @@ const DEPLOY = true;
 const PORT = DEPLOY ? 13000 : 5500;
 
 let NB_PLAYERS_IN_GAME = 2;
-let NB_POINTS_MATCH = 5;
+let NB_POINTS_MATCH = 10;
 
 const PAD_LENGTH = 50;
 const BALL_CAPSULE_LENGTH = 60;
