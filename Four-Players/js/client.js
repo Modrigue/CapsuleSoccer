@@ -11,7 +11,7 @@ const BALL_IMG = "./img/blue-ball-128.png";
 const BALL_CAPSULE_IMGS = ["./img/blue-pill-body-128.png", "./img/blue-pill-right-128.png", "./img/blue-pill-left-128.png"];
 const OBSTACLE_IMG = "./img/flocon-64.png";
 
-const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
+const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen", "Red", "Green"];
 const COLOR_WALL = "DodgerBlue";
 const COLOR_MARK = "MediumBlue";
 
@@ -54,7 +54,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
         clientBalls[player.id].angle = Math.PI; // corrects render while waiting
-        clientBalls[player.id].color = COLORS_PLAYERS[player.no - 1];
+        clientBalls[player.id].color = getPlayerColor(player.no);
 
         if (player.id !== undefined)
         {
@@ -201,7 +201,7 @@ function userInterface()
         // display player name
         if(clientBalls[id].name)
             ctx.font = fontSizeName;
-        ctx.fillStyle = COLORS_PLAYERS[clientBalls[id].no - 1];
+        ctx.fillStyle = getPlayerColor(clientBalls[id].no);
         const xPos = (clientBalls[id].no % 2 == 0) ? 580 : 60;
         const yPos = 25 + 25 * Math.floor((clientBalls[id].no - 1) / 2);
         const nameText = (clientBalls[id].name) ? clientBalls[id].name : ""
@@ -262,6 +262,16 @@ function createFootball(footballParams)
     ball.vel.set(0, 0);
 
     return ball;
+}
+
+function getPlayerColor(no)
+{
+    const nbColors = COLORS_PLAYERS.length;
+    let colorIndex = no % nbColors;
+    if (colorIndex == 0)
+         colorIndex = nbColors;
+
+    return COLORS_PLAYERS[colorIndex - 1];
 }
 
 form.onsubmit = function(e)

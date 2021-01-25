@@ -1,3 +1,3 @@
 # Rocket Soccer
-2-4 players online multiplayer game with socket.io.
+2-6 players online multiplayer game with socket.io.
 
