@@ -9,6 +9,7 @@ const BALL_CAPSULE_LENGTH = 60;
 
 const BALL_IMG = "./img/blue-ball-128.png";
 const BALL_CAPSULE_IMGS = ["./img/blue-pill-body-128.png", "./img/blue-pill-right-128.png", "./img/blue-pill-left-128.png"];
+const OBSTACLE_IMG = "./img/flocon-64.png";
 
 const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
 const COLOR_WALL = "DodgerBlue";
@@ -27,9 +28,12 @@ const ctx = canvas.getContext('2d');
 const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
+
+// init game field
 buildStadium();
 let football;
 let clientBalls = {};
+let obstacles = [];
 let selfID;
 
 socket.on('connect', () => {
@@ -91,11 +95,26 @@ socket.on('playerName', data => {
     clientBalls[data.id].name = data.name;
 })
 
-socket.on('newRound', footballParams => {
+socket.on('newFootball', footballParams => {
     if(football !== undefined)
         football.remove();
 
     football = createFootball(footballParams);
+})
+
+socket.on('newObstacles', obstacleParams => {
+    if(obstacles !== undefined)
+        for (let obstacle of obstacles)
+            obstacle.remove();
+
+    const r = obstacleParams.r;
+    for (let pos of obstacleParams.positions)
+    {
+        const obstacle = new Star6(pos.x, pos.y, r, 0, COLOR_WALL);
+        obstacle.setImages([OBSTACLE_IMG]);
+        obstacle.color = COLOR_WALL;
+        obstacles.push(obstacle); 
+    }
 })
 
 socket.on('updateFootball', footballParams => {
