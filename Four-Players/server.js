@@ -942,93 +942,19 @@ function connected(socket)
     console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
 
     const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
-    const clientNoMod = (clientNo % NB_PLAYERS_IN_GAME);
+    let clientNoInRoom = (clientNo % NB_PLAYERS_IN_GAME);
+    if (clientNoInRoom == 0)
+        clientNoInRoom = NB_PLAYERS_IN_GAME;
 
-    switch (clientNo % NB_PLAYERS_IN_GAME)
-    {
-        case 1:
-        {
-            // creating player 1
-            const xPad = 115;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-            serverBalls[socket.id].maxSpeed = 4;
-            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-            serverBalls[socket.id].score = 0;
-            serverBalls[socket.id].no = 1;
-            serverBalls[socket.id].angle = Math.PI; // face right
-            serverBalls[socket.id].layer = roomNo;
-            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: 1};
-            break;
-        }
+    // initialize player pad
+    serverBalls[socket.id] = new Capsule(320 + PAD_LENGTH/2, 270 - yPadDiff/2, 320 - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
+    serverBalls[socket.id].no = clientNoInRoom;
+    serverBalls[socket.id].layer = roomNo;
+    initPlayerPosition(socket.id);
+    playerReg[socket.id] = {id: socket.id, x: serverBalls[socket.id].pos.x, y: serverBalls[socket.id].pos.y, roomNo: roomNo, no: clientNoInRoom};
 
-        case 2:
-        {
-            // creating player 2
-            const xPad = 525;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-            serverBalls[socket.id].maxSpeed = 4;
-            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-            serverBalls[socket.id].score = 0;
-            serverBalls[socket.id].no = 2;
-            serverBalls[socket.id].angle = 0; // face left
-            serverBalls[socket.id].layer = roomNo;
-            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: 2};
-            break;
-        }
-
-        case 3:
-        {
-            // creating player 3
-            const xPad = 115;
-            serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-            serverBalls[socket.id].maxSpeed = 4;
-            serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-            serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-            serverBalls[socket.id].score = 0;
-            serverBalls[socket.id].no = 3;
-            serverBalls[socket.id].angle = Math.PI; // face right
-            serverBalls[socket.id].layer = roomNo;
-            playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 + yPadDiff/2, roomNo: roomNo, no: 3};
-            break;
-        }
-
-        case 0 /*NB_PLAYERS_IN_GAME*/:
-        {
-            // creating player <NB_PLAYERS_IN_GAME>
-            if (NB_PLAYERS_IN_GAME % 2 == 1)
-            {
-                const xPad = 115;
-                serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 + yPadDiff/2, xPad - PAD_LENGTH/2, 270 + yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-                serverBalls[socket.id].maxSpeed = 4;
-                serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-                serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-                serverBalls[socket.id].score = 0;
-                serverBalls[socket.id].no = NB_PLAYERS_IN_GAME;
-                serverBalls[socket.id].angle = Math.PI; // face right
-                serverBalls[socket.id].layer = roomNo;
-                playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 + yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};    
-            }
-            else
-            {
-                const xPad = 525;
-                serverBalls[socket.id] = new Capsule(xPad + PAD_LENGTH/2, 270 - yPadDiff/2, xPad - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-                serverBalls[socket.id].maxSpeed = 4;
-                serverBalls[socket.id].angFriction = PAD_ANGLE_FRICTION;
-                serverBalls[socket.id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-                serverBalls[socket.id].score = 0;
-                serverBalls[socket.id].no = NB_PLAYERS_IN_GAME;
-                serverBalls[socket.id].angle = 0; // face left
-                serverBalls[socket.id].layer = roomNo;
-                playerReg[socket.id] = {id: socket.id, x: xPad, y: 270 - yPadDiff/2, roomNo: roomNo, no: NB_PLAYERS_IN_GAME};
-            }
-            break;
-        }
-    }
-
-    // create ball if all ball present
-    if (clientNoMod == 0)
+    // create ball if all players present
+    if (clientNoInRoom == NB_PLAYERS_IN_GAME)
     {
         football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
         // football[roomNo] = new Capsule(
@@ -1205,6 +1131,9 @@ function initPlayerPosition(id)
 
     serverBalls[id].vel.set(0, 0);
     serverBalls[id].angVel = 0;
+    serverBalls[id].angFriction = PAD_ANGLE_FRICTION;
+    serverBalls[id].angKeyForce = PAD_ANGLE_KEY_FORCE;
+    serverBalls[id].maxSpeed = 4;
 
     const teamNo = (serverBalls[id].no % 2 == 0) ? 2 : 1;
     const nbPlayersInTeam = (teamNo == 1) ?
