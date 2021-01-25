@@ -2,15 +2,16 @@ const DEPLOY = true;
 const PORT = DEPLOY ? 13000 : 5500;
 
 let NB_PLAYERS_IN_GAME = 2;
-let NB_POINTS_MATCH = 5;
+let NB_POINTS_MATCH = 10;
 
 const PAD_LENGTH = 50;
 const BALL_CAPSULE_LENGTH = 60;
 
 const BALL_IMG = "./img/blue-ball-128.png";
 const BALL_CAPSULE_IMGS = ["./img/blue-pill-body-128.png", "./img/blue-pill-right-128.png", "./img/blue-pill-left-128.png"];
+const OBSTACLE_IMG = "./img/flocon-64.png";
 
-const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen"];
+const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen", "Red", "Green"];
 const COLOR_WALL = "DodgerBlue";
 const COLOR_MARK = "MediumBlue";
 
@@ -27,9 +28,12 @@ const ctx = canvas.getContext('2d');
 const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 
+
+// init game field
 buildStadium();
 let football;
 let clientBalls = {};
+let obstacles = [];
 let selfID;
 
 socket.on('connect', () => {
@@ -50,7 +54,7 @@ socket.on('updateConnections', player => {
         clientBalls[player.id].score = 0;
         clientBalls[player.id].no = player.no;
         clientBalls[player.id].angle = Math.PI; // corrects render while waiting
-        clientBalls[player.id].color = COLORS_PLAYERS[player.no - 1];
+        clientBalls[player.id].color = getPlayerColor(player.no);
 
         if (player.id !== undefined)
         {
@@ -91,11 +95,26 @@ socket.on('playerName', data => {
     clientBalls[data.id].name = data.name;
 })
 
-socket.on('newRound', footballParams => {
+socket.on('newFootball', footballParams => {
     if(football !== undefined)
         football.remove();
 
     football = createFootball(footballParams);
+})
+
+socket.on('newObstacles', obstacleParams => {
+    if(obstacles !== undefined)
+        for (let obstacle of obstacles)
+            obstacle.remove();
+
+    const r = obstacleParams.r;
+    for (let pos of obstacleParams.positions)
+    {
+        const obstacle = new Star6(pos.x, pos.y, r, 0, COLOR_WALL);
+        obstacle.setImages([OBSTACLE_IMG]);
+        obstacle.color = COLOR_WALL;
+        obstacles.push(obstacle); 
+    }
 })
 
 socket.on('updateFootball', footballParams => {
@@ -104,8 +123,6 @@ socket.on('updateFootball', footballParams => {
         football = new Ball(footballParams.x, footballParams.y, footballParams.r, footballParams.m);
         football.color = "blue";
         football.setImages([BALL_IMG]);
-        console.log(football.m);
-        
     }
     else
     {
@@ -155,6 +172,12 @@ requestAnimationFrame(renderOnly);
 
 function userInterface()
 {    
+    // display title
+    ctx.font = "italic 28px Arial";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "dodgerblue";
+    ctx.fillText("Rocket Soccer", 320, 30);
+
     for (let id in clientBalls)
     {
         const fontSizeScore = "48px Arial";
@@ -178,7 +201,7 @@ function userInterface()
         // display player name
         if(clientBalls[id].name)
             ctx.font = fontSizeName;
-        ctx.fillStyle = COLORS_PLAYERS[clientBalls[id].no - 1];
+        ctx.fillStyle = getPlayerColor(clientBalls[id].no);
         const xPos = (clientBalls[id].no % 2 == 0) ? 580 : 60;
         const yPos = 25 + 25 * Math.floor((clientBalls[id].no - 1) / 2);
         const nameText = (clientBalls[id].name) ? clientBalls[id].name : ""
@@ -239,6 +262,16 @@ function createFootball(footballParams)
     ball.vel.set(0, 0);
 
     return ball;
+}
+
+function getPlayerColor(no)
+{
+    const nbColors = COLORS_PLAYERS.length;
+    let colorIndex = no % nbColors;
+    if (colorIndex == 0)
+         colorIndex = nbColors;
+
+    return COLORS_PLAYERS[colorIndex - 1];
 }
 
 form.onsubmit = function(e)

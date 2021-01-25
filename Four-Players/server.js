@@ -3,7 +3,7 @@ const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 
 // game parameters
 const NB_PLAYERS_IN_GAME = 2;
-const NB_POINTS_MATCH = 5;
+const NB_POINTS_MATCH = 10;
 
 // pad paremeters
 const PAD_ANGLE_FRICTION = 0.08;
@@ -24,7 +24,8 @@ const BALL_CAPSULE_LENGTH = 60;
 const BODIES = [];
 const COLLISIONS = [];
 
-class Vector{
+class Vector
+{
     constructor(x, y){
         this.x = x;
         this.y = y;
@@ -931,7 +932,7 @@ buildStadium();
 let playerReg = {};
 let serverBalls = {};
 let football = {};
-let footballParams = {};
+let obstacles = {};
 let clientNo = 0;
 let roomNo;
 let gameIsOn = {};
@@ -965,6 +966,12 @@ function connected(socket)
         football[roomNo].layer = roomNo;
         io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y,
             r: BALL_RADIUS, m: BALL_MASS, angle: football[roomNo].angle});
+
+        // set dummy positions for obstacles
+        obstacles[roomNo] = [];
+        for (let i = 0; i < 4; i++)
+            obstacles[roomNo].push(new Star6(-100, -100, 15, 0));
+        obstacles[roomNo].layer = roomNo;
     }
 
     for (let id in serverBalls)
@@ -975,8 +982,14 @@ function connected(socket)
     socket.on('disconnect', function(){
         if(serverBalls[socket.id] !== undefined && football[serverBalls[socket.id].layer])
         {
-            football[serverBalls[socket.id].layer].remove();
-            delete football[football[serverBalls[socket.id].layer]];
+            const room = serverBalls[socket.id].layer;
+
+            football[room].remove();
+            delete football[football[room]];
+
+            for (let obstacle of obstacles[room])
+                obstacle.remove();
+            delete obstacles[football[room]];
         }
         serverBalls[socket.id].remove();
         io.to(serverBalls[socket.id].layer).emit('deletePlayer', playerReg[socket.id]);
@@ -1114,13 +1127,25 @@ function roundSetup(room)
     // generate new random ball
     football[room].remove();
     football[room] = newRandomBall();
-    io.emit('newRound', {
+    io.emit('newFootball', {
         type: (football[room] instanceof Capsule) ? BALL_TYPES.CAPSULE : BALL_TYPES.ball,
         x: football[room].pos.x,
         y: football[room].pos.y,
         r: BALL_RADIUS,
         m: BALL_MASS
     });
+
+    // generate new obstacles
+
+    for (let obstacle of obstacles[room])
+        obstacle.remove();
+    obstacles[room] = newRandomObstacles();
+
+    let obstaclesPos = [];
+    for (const obstacle of obstacles[room])
+        obstaclesPos.push(new Vector(obstacle.pos.x, obstacle.pos.y));
+
+    io.emit('newObstacles', {positions : obstaclesPos, r: obstacles[room][0].r});
 }
 
 function initPlayerPosition(id)
@@ -1227,7 +1252,6 @@ function newRandomBallRadius(ballType)
         BALL_RADIUS_MAX = 20; 
     }
 
-
     return Math.floor(BALL_RADIUS_MIN + (BALL_RADIUS_MAX - BALL_RADIUS_MIN)*Math.random());
 }
 
@@ -1238,7 +1262,47 @@ function newRandomBallMass()
     return BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];;
 }
 
+function newRandomObstacles()
+{
+    let newObstacles = [];
+
+    // parameters
+    const r = 15;
+    const dxMax = 180;
+    const dyMax = 100;
+
+    // choose nb. of obstacles
+    nbObstaclesPercent = Math.floor(100*Math.random());
+    let obstaclesAppear = [false, false]; // no obstacles
+    if (nbObstaclesPercent > 66)
+        obstaclesAppear = [true, true]; // 2 obstacles pairs
+    else if (nbObstaclesPercent > 33)
+        obstaclesAppear = [true, false]; // 1 obstacles pair
+
+    for (let appear of obstaclesAppear)
+    {
+        const dx = Math.round(2*dxMax*Math.random() - dxMax);
+        const dy = Math.round(2*dyMax*Math.random() - dyMax);
+        const distToCenter = distance(dx, 0, dy, 0);
+
+        let x1 = (appear && distToCenter >= 50) ? 320 + dx : -100;
+        let y1 = (appear && distToCenter >= 50) ? 270 + dy : -100;
+        let x2 = (appear && distToCenter >= 50) ? 320 - dx : -100;
+        let y2 = (appear && distToCenter >= 50) ? 270 - dy : -100;
+
+        // add new obstacles pair
+        newObstacles.push(new Star6(x1, y1, r, 0), new Star6(x2, y2, r, 0));
+    }
+
+    return newObstacles;
+}
+
 function isNumeric(value)
 {
     return !isNaN(value)
+}
+
+function distance(x1, x2, y1, y2)
+{
+    return Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
 }

@@ -1,7 +1,8 @@
 const BODIES = [];
 const COLLISIONS = [];
 
-class Vector{
+class Vector
+{
     constructor(x, y){
         this.x = x;
         this.y = y;
@@ -588,8 +589,10 @@ class Box extends Body{
     }
 }
 
-class Star6 extends Body{
-    constructor(x1, y1, r, m){
+class Star6 extends Body
+{
+    constructor(x1, y1, r, m, color = "black")
+    {
         super();
         this.comp = [];
         this.r = r;
@@ -606,6 +609,7 @@ class Star6 extends Body{
         this.pos = this.comp[0].pos;
         
         this.setMass(m);
+        this.color = color;
     }
 
     keyControl(){
@@ -649,6 +653,21 @@ class Star6 extends Body{
             this.inv_inertia = 0;
         } else {
             this.inv_inertia = 1 / this.inertia;
+        }
+    }
+
+    render()
+    {
+        if (this.images === undefined || this.images.length == 0)
+            super.render();
+        else
+        {
+            const image = this.images[0];
+            if (this.angle == 0)
+                ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+            else
+                drawRotatedImage(ctx, image, 2*this.r, 2*this.r, this.angle,
+                    this.pos.x, this.pos.y, this.r, this.r);
         }
     }
 
