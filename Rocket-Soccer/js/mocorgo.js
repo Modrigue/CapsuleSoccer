@@ -1,26 +1,3 @@
-const DEPLOY = true;
-const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
-
-// game parameters
-const NB_PLAYERS_IN_GAME = 2;
-const NB_POINTS_MATCH = 10;
-
-// pad paremeters
-const PAD_ANGLE_FRICTION = 0.08;
-const PAD_ANGLE_KEY_FORCE = 0.07;
-const PAD_WIDTH = 25;
-const PAD_LENGTH = 50;
-const PAD_MASS = 10;
-
-// ball paremeters
-const BALL_TYPES = {
-    BALL: 'ball',
-    CAPSULE: 'capsule'
-}
-let BALL_RADIUS = newRandomBallRadius(BALL_TYPES.BALL);
-let BALL_MASS = newRandomBallMass();
-const BALL_CAPSULE_LENGTH = 60;
-
 const BODIES = [];
 const COLLISIONS = [];
 
@@ -122,7 +99,8 @@ class Line{
         this.pos = new Vector((this.vertex[0].x+this.vertex[1].x)/2, (this.vertex[0].y+this.vertex[1].y)/2);
     }
 
-    draw(color){
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
@@ -145,16 +123,62 @@ class Circle{
         this.r = r;
     }
 
-    draw(color){
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2*Math.PI);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+        const drawColor = (color === "") ? "black" : color;
+
+        if (image !== null)
+        {
+            if (angle == 0)
+                ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+            else
+                drawRotatedImage(ctx, image, 2*this.r, 2*this.r, angle,
+                    this.pos.x, this.pos.y, this.r, this.r);
+        }
+        else if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
+
+        ctx.fillStyle = "";
+        ctx.closePath();
+    }
+}
+
+class Arc{
+    constructor(x, y, r, a_start, a_end){
+        this.vertex = [];
+        this.pos = new Vector(x, y);
+        this.r = r;
+        this.angle_start = a_start;
+        this.angle_end = a_end;
+    }
+
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
+        const drawColor = (color === "") ? "black" : color;
+
+        if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
+            ctx.stroke();
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
+            ctx.fill();
+        }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -174,24 +198,72 @@ class Rectangle{
         this.pos = this.vertex[0].add(this.dir.mult(this.length/2)).add(this.dir.normal().mult(this.width/2));
         this.angle = 0;
         this.rotMat = new Matrix(2,2);
+
+        this.xy1 = new Vector(x1, y1);
+        this.xy2 = new Vector(x2, y2 + w);
     }
 
-    draw(color){
-        ctx.beginPath();
-        ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
-        ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
-        ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
-        ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
-        ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-        if (color === ""){
-            ctx.strokeStyle = "black";
-            ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
-            ctx.fill();
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
+        if (image !== null)
+        {
+            const xLength = this.xy2.x - this.xy1.x;
+            const yLength = this.xy2.y - this.xy1.y;
+
+            if (angle == 0)
+                ctx.drawImage(image, 
+                    this.pos.x - xLength/2,  this.pos.y - yLength/2,
+                    xLength, yLength);
+            else
+                drawRotatedImage(ctx, image,
+                    xLength, yLength,
+                    angle,
+                    this.pos.x, this.pos.y,
+                    xLength/2, yLength/2
+                );
         }
-        ctx.fillStyle = "";
-        ctx.closePath();
+        else
+        {
+            ctx.beginPath();
+            ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
+            ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
+            ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
+            ctx.lineTo(this.vertex[3].x, this.vertex[3].y);
+            ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
+    
+            const drawColor = (color === "") ? "black" : color;
+
+            if (!fill)
+            {
+                ctx.strokeStyle = drawColor;
+                ctx.stroke();
+            }
+            else
+            {
+                ctx.fillStyle = drawColor;
+                ctx.fill();
+            }
+            ctx.fillStyle = "";
+            ctx.closePath();
+        }
+
+        if (action && actionImage !== null)
+        {
+            const xLength = 145; // specific
+            const yLength = this.xy2.y - this.xy1.y;
+
+            if (angle == 0)
+                ctx.drawImage(actionImage, 
+                    this.pos.x - xLength/2,  this.pos.y - yLength/2,
+                    xLength, yLength);
+            else
+                drawRotatedImage(ctx, actionImage,
+                    xLength, yLength,
+                    angle,
+                    this.pos.x, this.pos.y,
+                    xLength/2, yLength/2
+                );
+        }
     }
 
     getVertices(angle){
@@ -221,19 +293,27 @@ class Triangle{
         this.rotMat = new Matrix(2,2);
     }
 
-    draw(color){
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
         ctx.lineTo(this.vertex[2].x, this.vertex[2].y);
         ctx.lineTo(this.vertex[0].x, this.vertex[0].y);
-        if (color === ""){
-            ctx.strokeStyle = "black";
+
+        const drawColor = (color === "") ? "black" : color;
+
+        if (color === "")
+        {
+            ctx.strokeStyle = drawColor;
             ctx.stroke();
-        } else {
-            ctx.fillStyle = color;
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
             ctx.fill();
         }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -264,6 +344,7 @@ class Body{
         this.color = "";
         this.layer = 0;
 
+        // user inputs
         this.up = false;
         this.down = false;
         this.left = false;
@@ -279,12 +360,18 @@ class Body{
         this.player = false;
         this.collides = true;
 
+        this.images = [];
+        this.actionImage = null;
+
         BODIES.push(this);
     }
 
-    render(){
-        for (let i in this.comp){
-            this.comp[i].draw(this.color);
+    render()
+    {
+        for (let i in this.comp)
+        {
+            this.comp[i].draw(this.color, this.fill, this.images[i], this.angle,
+                this.up, this.actionImage);
         }
     }
     reposition(){
@@ -303,6 +390,11 @@ class Body{
         }
     }
 
+    setCollisions(value)
+    {
+        this.collides = value;
+    }
+
     setMass(m)
     {
         this.m = m;
@@ -316,9 +408,20 @@ class Body{
         }
     }
 
-    setCollide(value)
+    setImages(urls)
     {
-        this.collides = value;
+        for (let url of urls)
+        {
+            const image = new Image();
+            image.src = url;
+            this.images.push(image);
+        }
+    }
+
+    setActionImage(url)
+    {
+        this.actionImage = new Image();
+        this.actionImage.src = url;
     }
 }
 
@@ -330,7 +433,8 @@ class Ball extends Body{
         this.setMass(m);
     }
 
-    setPosition(x, y, a = this.angle){
+    setPosition(x, y, a = this.angle)
+    {
         this.pos.set(x, y);
         this.comp[0].pos = this.pos;
     }
@@ -485,8 +589,10 @@ class Box extends Body{
     }
 }
 
-class Star6 extends Body{
-    constructor(x1, y1, r, m){
+class Star6 extends Body
+{
+    constructor(x1, y1, r, m, color = "black")
+    {
         super();
         this.comp = [];
         this.r = r;
@@ -503,6 +609,7 @@ class Star6 extends Body{
         this.pos = this.comp[0].pos;
         
         this.setMass(m);
+        this.color = color;
     }
 
     keyControl(){
@@ -549,6 +656,21 @@ class Star6 extends Body{
         }
     }
 
+    render()
+    {
+        if (this.images === undefined || this.images.length == 0)
+            super.render();
+        else
+        {
+            const image = this.images[0];
+            if (this.angle == 0)
+                ctx.drawImage(image, this.pos.x - this.r, this.pos.y - this.r, 2*this.r, 2*this.r);
+            else
+                drawRotatedImage(ctx, image, 2*this.r, 2*this.r, this.angle,
+                    this.pos.x, this.pos.y, this.r, this.r);
+        }
+    }
+
     reposition(){
         super.reposition();
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
@@ -556,20 +678,63 @@ class Star6 extends Body{
 }
 
 class Wall extends Body{
-    constructor(x1, y1, x2, y2){
-        super();
-        this.comp = [new Line(x1, y1, x2, y2)];
-        this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
-    }
-}
-
-class LineMark extends Body{
-    constructor(x1, y1, x2, y2, color = "White"){
+    constructor(x1, y1, x2, y2, color = "Black")
+    {
         super();
         this.comp = [new Line(x1, y1, x2, y2)];
         this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
 
         this.color = color;
+    }
+}
+
+class WallArc extends Body
+{
+    constructor(x, y, r, a_start, a_end, color = "Black")
+    {
+        super();
+        this.comp = [new Arc(x, y, r, a_start, a_end)];
+        this.pos = new Vector(x, y);
+
+        this.color = color;
+        this.fill = false;
+    }
+}
+
+class LineMark extends Body{
+    constructor(x1, y1, x2, y2, color = "White")
+    {
+        super();
+        this.comp = [new Line(x1, y1, x2, y2)];
+        this.pos = new Vector((x1+x2)/2, (y1+y2)/2);
+
+        this.color = color;
+        this.collides = false;
+    }
+}
+
+class CircleMark extends Body{
+    constructor(x, y, r, color = "White")
+    {
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Circle(x, y, r)];
+
+        this.color = color;
+        this.fill = false;
+        this.collides = false;
+    }
+}
+
+class ArcMark extends Body{
+    constructor(x, y, r, a_start, a_end, color = "White")
+    {
+        super();
+        this.pos = new Vector(x, y);
+        this.comp = [new Arc(x, y, r, a_start, a_end)];
+
+        this.color = color;
+        this.fill = false;
         this.collides = false;
     }
 }
@@ -885,11 +1050,15 @@ function physicsLoop(timestamp) {
     });
 }
 
+//If anything else (text, data...) needs to be rendered on the canvas
+function userInterface(){};
+
 function renderLoop(){
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     BODIES.forEach((b) => {
         b.render();
     })
+    userInterface();
 }
 
 function mainLoop(){
@@ -905,404 +1074,22 @@ function renderOnly(){
     requestAnimationFrame(renderOnly);
 }
 
-//************************* END OF PHYSICS ENGINE ***/
-
-const express = require('express');
-const app = express();
-let io;
-if (DEPLOY)
+// from https://stackoverflow.com/a/46921702
+function drawRotatedImage(context, image, w, h, angleInRad, xCenter, yCenter, dx, dy)
 {
-    app.use(express.static('.'));
-    http = require('http').Server(app);
-    io = require('socket.io')(http);
-    
-    app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
-    
-    http.listen(PORT, function(){
-        console.log(`listening on port ${PORT}...`);
-    })
-}
-else
-{
-    io = require('socket.io')(PORT)
-    app.get('/', (req, res) => res.send('Hello World!'))
+    context.save();
+    context.translate(xCenter, yCenter);
+    context.rotate(angleInRad);
+    context.drawImage(image, -dx, -dy, w, h);
+    context.restore();
 }
 
-buildStadium();
-let playerReg = {};
-let serverBalls = {};
-let football = {};
-let obstacles = {};
-let clientNo = 0;
-let roomNo;
-let gameIsOn = {};
-
-io.on('connection', connected);
-setInterval(serverLoop, 1000/60);
-
-function connected(socket)
-{
-    clientNo++;
-    roomNo = Math.ceil(clientNo / NB_PLAYERS_IN_GAME);
-    socket.join(roomNo);
-    console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
-
-    const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
-    let clientNoInRoom = (clientNo % NB_PLAYERS_IN_GAME);
-    if (clientNoInRoom == 0)
-        clientNoInRoom = NB_PLAYERS_IN_GAME;
-
-    // initialize player pad
-    serverBalls[socket.id] = new Capsule(320 + PAD_LENGTH/2, 270 - yPadDiff/2, 320 - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-    serverBalls[socket.id].no = clientNoInRoom;
-    serverBalls[socket.id].layer = roomNo;
-    initPlayerPosition(socket.id);
-    playerReg[socket.id] = {id: socket.id, x: serverBalls[socket.id].pos.x, y: serverBalls[socket.id].pos.y, roomNo: roomNo, no: clientNoInRoom};
-
-    // create ball if all players present
-    if (clientNoInRoom == NB_PLAYERS_IN_GAME)
-    {
-        football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
-        football[roomNo].layer = roomNo;
-        io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y,
-            r: BALL_RADIUS, m: BALL_MASS, angle: football[roomNo].angle});
-
-        // set dummy positions for obstacles
-        obstacles[roomNo] = [];
-        for (let i = 0; i < 4; i++)
-            obstacles[roomNo].push(new Star6(-100, -100, 15, 0));
-        obstacles[roomNo].layer = roomNo;
-    }
-
-    for (let id in serverBalls)
-    {
-        io.to(serverBalls[id].layer).emit('updateConnections', playerReg[id]);
-    }
-
-    socket.on('disconnect', function(){
-        if(serverBalls[socket.id] !== undefined && football[serverBalls[socket.id].layer])
-        {
-            const room = serverBalls[socket.id].layer;
-
-            football[room].remove();
-            delete football[football[room]];
-
-            for (let obstacle of obstacles[room])
-                obstacle.remove();
-            delete obstacles[football[room]];
-        }
-        serverBalls[socket.id].remove();
-        io.to(serverBalls[socket.id].layer).emit('deletePlayer', playerReg[socket.id]);
-        delete serverBalls[socket.id];
-        delete playerReg[socket.id];
-        console.log(playerReg);
-        console.log(`Number of players: ${Object.keys(playerReg).length}`)
-        console.log(`Number of balls: ${Object.keys(football).length}`)
-        //console.log(`Number of BODIES: ${BODIES.length-12}`);
-        console.log(`Joined players ever: ${clientNo}`)
-        io.emit('updateConnections', playerReg);
-    })
-
-    console.log(playerReg);
-        console.log(`Number of players: ${Object.keys(playerReg).length}`)
-        console.log(`Number of balls: ${Object.keys(football).length}`)
-        //console.log(`Number of BODIES: ${BODIES.length-12}`);
-        console.log(`Joined players ever: ${clientNo}`)
-
-    socket.on('userCommands', data => {
-        serverBalls[socket.id].left = data.left;
-        serverBalls[socket.id].up = data.up;
-        serverBalls[socket.id].right = data.right;
-        serverBalls[socket.id].down = data.down;
-        serverBalls[socket.id].action = data.action;
-    })
-
-    socket.on('clientName', data => {
-        serverBalls[socket.id].name = data;
-        console.log(`${data} is in room no.${serverBalls[socket.id].layer}`);
-        if (playersReadyInRoom(serverBalls[socket.id].layer) === NB_PLAYERS_IN_GAME)
-        {
-            for (let id in serverBalls){
-                if(serverBalls[id].layer === serverBalls[socket.id].layer){
-                    io.to(serverBalls[id].layer).emit('playerName', {id: id, name: serverBalls[id].name});
-                }
-            }
-            gameIsOn[serverBalls[socket.id].layer] = true;
-        } else {
-            gameIsOn[serverBalls[socket.id].layer] = false;
-        }
-    })
+const BALL_TYPES = {
+    BALL: 'ball',
+    CAPSULE: 'capsule'
 }
 
-function serverLoop(){
-    userInteraction();
-    physicsLoop();
-    for (let room = 1; room <= roomNo; room++){
-        if (gameIsOn[room] === true)
-        {
-            gameLogic(room);
-            for (let id in serverBalls)
-            {
-                if (serverBalls[id].layer === room){
-                    io.to(room).emit('positionUpdate', {
-                        id: id,
-                        x: serverBalls[id].pos.x,
-                        y: serverBalls[id].pos.y,
-                        angle: serverBalls[id].angle
-                    });
-                }
-            }
-            io.to(room).emit('updateFootball', {
-                x: football[room].pos.x,
-                y: football[room].pos.y,
-                r: BALL_RADIUS,
-                angle: football[room].angle
-            });
-        } else {
-            //console.log("waiting for n players...");
-        }
-    }
-}
-
-function gameLogic(room){
-    if(football[room].pos.x < 45 || football[room].pos.x > 595){
-        scoring(room);
-    }
-    for(let id in serverBalls){
-        if(serverBalls[id].score === NB_POINTS_MATCH && serverBalls[id].layer === room){
-            gameOver(room);
-        }
-    }
-}
-
-function gameOver(room){
-    roundSetup(room);
-    io.to(room).emit('updateScore', null);
-    setTimeout(() => {
-        for(let id in serverBalls){
-            if(serverBalls[id].layer === room){
-                serverBalls[id].score = 0;
-            }
-        }
-    }, 2000);
-}
-
-function scoring(room){
-    let scorerId;
-    if(football[room].pos.x < 45)
-    {
-        for(let id in serverBalls)
-        {
-            const rightTeamPlayerNo = 2 * Math.floor(NB_PLAYERS_IN_GAME / 2);
-            if (serverBalls[id].no === rightTeamPlayerNo && serverBalls[id].layer === room)
-            {
-                serverBalls[id].score++;
-                scorerId = id;
-                console.log("score for team 2!");
-            }
-        }
-    }
-    if(football[room].pos.x > 595)
-    {
-        for(let id in serverBalls){
-            if (serverBalls[id].no === 1 && serverBalls[id].layer === room)
-            {
-                serverBalls[id].score++;
-                scorerId = id;
-                console.log("score for team 1!");
-            }
-        }
-    }
-    roundSetup(room);
-    io.to(room).emit('updateScore', scorerId);
-}
-
-function roundSetup(room)
-{
-    // reset players position
-    for(let id in serverBalls)      
-        if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
-            initPlayerPosition(id);
-
-    // generate new random ball
-    football[room].remove();
-    football[room] = newRandomBall();
-    io.emit('newFootball', {
-        type: (football[room] instanceof Capsule) ? BALL_TYPES.CAPSULE : BALL_TYPES.ball,
-        x: football[room].pos.x,
-        y: football[room].pos.y,
-        r: BALL_RADIUS,
-        m: BALL_MASS
-    });
-
-    // generate new obstacles
-
-    for (let obstacle of obstacles[room])
-        obstacle.remove();
-    obstacles[room] = newRandomObstacles();
-
-    let obstaclesPos = [];
-    for (const obstacle of obstacles[room])
-        obstaclesPos.push(new Vector(obstacle.pos.x, obstacle.pos.y));
-
-    io.emit('newObstacles', {positions : obstaclesPos, r: obstacles[room][0].r});
-}
-
-function initPlayerPosition(id)
-{
-    const yPadDiff = 80;
-
-    serverBalls[id].vel.set(0, 0);
-    serverBalls[id].angVel = 0;
-    serverBalls[id].angFriction = PAD_ANGLE_FRICTION;
-    serverBalls[id].angKeyForce = PAD_ANGLE_KEY_FORCE;
-    serverBalls[id].maxSpeed = 4;
-
-    const teamNo = (serverBalls[id].no % 2 == 0) ? 2 : 1;
-    const nbPlayersInTeam = (teamNo == 1) ?
-        Math.ceil(NB_PLAYERS_IN_GAME / 2) :
-        Math.floor(NB_PLAYERS_IN_GAME / 2);
-    const noPlayerInTeam = Math.floor((serverBalls[id].no - 1) / 2) + 1;
-
-    const xStart = (teamNo == 1) ? 115 : 525;
-    let yMin = (nbPlayersInTeam % 2 == 0) ?
-        270 - (Math.floor(nbPlayersInTeam/2) - 0.5)*yPadDiff :
-        270 - Math.floor(nbPlayersInTeam/2)*yPadDiff;
-    const yStart = yMin + (noPlayerInTeam - 1)*yPadDiff;
-    //console.log('PLAYER ', serverBalls[id].no, noPlayerInTeam, yMin, xStart, yStart);
-
-    const orientation = (teamNo == 1) ? Math.PI : 0;
-    
-    serverBalls[id].setPosition(xStart, yStart, orientation);
-}
-
-function buildStadium()
-{
-    // Top / bottom walls
-    new Wall(60, 80, 580, 80);
-    new Wall(60, 460, 580, 460);
-
-    new Wall(60, 80, 60, 180);
-    new Wall(60, 460, 60, 360);
-    new Wall(580, 80, 580, 180);
-    new Wall(580, 460, 580, 360);
-
-    new Wall(50, 360, 10, 360);
-    new Wall(0, 360, 0, 180);
-    new Wall(10, 180, 50, 180);
-    new Wall(590, 360, 630, 360);
-    new Wall(640, 360, 640, 180);
-    new Wall(630, 180, 590, 180);
-}
-
-function playersReadyInRoom(room)
-{
-    let pno = 0;
-    for (let id in serverBalls)
-    {
-        if(serverBalls[id].layer === room && serverBalls[id].name){
-            pno++;
-        }
-    }
-
-    // send game parameters
-    io.emit('setNbPointsMatch', NB_POINTS_MATCH);
-    io.emit('setBallRadius', BALL_RADIUS);
-
-    return pno;
-}
-
-function newRandomBall()
-{
-    const ballTypeNumber = Math.floor(3*Math.random());
-    const ballType = (ballTypeNumber == 2) ? BALL_TYPES.CAPSULE : BALL_TYPES.BALL;
-
-    BALL_RADIUS = newRandomBallRadius(ballType)
-    BALL_MASS = newRandomBallMass();
-
-    let ball;
-    switch(ballType)
-    {
-        case BALL_TYPES.BALL:
-            ball = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
-            break;
-        
-        case BALL_TYPES.CAPSULE:
-            ball = new Capsule(
-                320 - BALL_CAPSULE_LENGTH/2, 270,
-                320 + BALL_CAPSULE_LENGTH/2, 270,
-                BALL_RADIUS, BALL_RADIUS, BALL_MASS
-            );
-            break;
-    }
-
-    ball.pos.set(320, 270);
-    ball.vel.set(0, 0);
-
-    return ball;
-}
-
-function newRandomBallRadius(ballType)
-{
-    let BALL_RADIUS_MIN = 10;
-    let BALL_RADIUS_MAX = 40;
-    if (ballType == BALL_TYPES.CAPSULE)
-    {
-        BALL_RADIUS_MIN = 5;
-        BALL_RADIUS_MAX = 20; 
-    }
-
-    return Math.floor(BALL_RADIUS_MIN + (BALL_RADIUS_MAX - BALL_RADIUS_MIN)*Math.random());
-}
-
-function newRandomBallMass()
-{
-    const BALL_MASS_ARRAY = [1, 5, 10, 20, 100];
-
-    return BALL_MASS_ARRAY[Math.floor(BALL_MASS_ARRAY.length*Math.random())];;
-}
-
-function newRandomObstacles()
-{
-    let newObstacles = [];
-
-    // parameters
-    const r = 15;
-    const dxMax = 180;
-    const dyMax = 100;
-
-    // choose nb. of obstacles
-    nbObstaclesPercent = Math.floor(100*Math.random());
-    let obstaclesAppear = [false, false]; // no obstacles
-    if (nbObstaclesPercent > 66)
-        obstaclesAppear = [true, true]; // 2 obstacles pairs
-    else if (nbObstaclesPercent > 33)
-        obstaclesAppear = [true, false]; // 1 obstacles pair
-
-    for (let appear of obstaclesAppear)
-    {
-        const dx = Math.round(2*dxMax*Math.random() - dxMax);
-        const dy = Math.round(2*dyMax*Math.random() - dyMax);
-        const distToCenter = distance(dx, 0, dy, 0);
-
-        let x1 = (appear && distToCenter >= 50) ? 320 + dx : -100;
-        let y1 = (appear && distToCenter >= 50) ? 270 + dy : -100;
-        let x2 = (appear && distToCenter >= 50) ? 320 - dx : -100;
-        let y2 = (appear && distToCenter >= 50) ? 270 - dy : -100;
-
-        // add new obstacles pair
-        newObstacles.push(new Star6(x1, y1, r, 0), new Star6(x2, y2, r, 0));
-    }
-
-    return newObstacles;
-}
-
-function isNumeric(value)
-{
-    return !isNaN(value)
-}
-
-function distance(x1, x2, y1, y2)
-{
-    return Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+const WALL_TYPES = {
+    WALL: 'wall',
+    WALL_ARC: 'wall_arc'
 }
