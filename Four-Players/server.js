@@ -1013,7 +1013,7 @@ function connected(socket)
     if (clientNoInRoom == NB_PLAYERS_IN_GAME)
     {
         // stadium
-        newStadium(roomNo);
+        newRandomStadium(roomNo);
         stadium[roomNo].layer = roomNo;
 
         // ball
@@ -1194,6 +1194,11 @@ function roundSetup(room)
         m: BALL_MASS
     });
 
+    // generate new stadium
+    for (let wall of stadium[room])
+        wall.remove();
+    newRandomStadium(room);
+
     // generate new obstacles
 
     for (let obstacle of obstacles[room])
@@ -1235,27 +1240,139 @@ function initPlayerPosition(id)
     serverBalls[id].setPosition(xStart, yStart, orientation);
 }
 
-function newStadium(roomNo)
+function newRandomStadium(roomNo)
 {
     stadium[roomNo] = [];
 
     // WARNING: WALLS MUST NOT INTERSECT WITH EACH OTHERS!!
 
-    // Top / bottom walls
-    stadium[roomNo].push(new Wall(60, 80, 580, 80));
-    stadium[roomNo].push(new Wall(60, 460, 580, 460));
+    const stadiumTypeNumber = 1 + Math.floor(4*Math.random());
+    switch(stadiumTypeNumber)
+    {
+        case 2:
+            // Top walls
+            stadium[roomNo].push(new Wall(60, 80, 280, 80));
+            stadium[roomNo].push(new Wall(360, 80, 580, 80));
+            stadium[roomNo].push(new WallArc(320, 80, 40, 0, Math.PI));
+            stadium[roomNo].push(new Wall(60, 80, 60, 140));
+            stadium[roomNo].push(new Wall(580, 80, 580, 140));
 
-    stadium[roomNo].push(new Wall(60, 80, 60, 180));
-    stadium[roomNo].push(new Wall(60, 460, 60, 360));
-    stadium[roomNo].push(new Wall(580, 80, 580, 180));
-    stadium[roomNo].push(new Wall(580, 460, 580, 360));
+            // bottom walls
+            stadium[roomNo].push(new Wall(60, 460, 280, 460));
+            stadium[roomNo].push(new Wall(360, 460, 580, 460));
+            stadium[roomNo].push(new WallArc(320, 460, 40, Math.PI, 2*Math.PI));
+            stadium[roomNo].push(new Wall(60, 460, 60, 400));
+            stadium[roomNo].push(new Wall(580, 460, 580, 400));
 
-    stadium[roomNo].push(new Wall(50, 360, 10, 360));
-    stadium[roomNo].push(new Wall(0, 360, 0, 180));
-    stadium[roomNo].push(new Wall(10, 180, 50, 180));
-    stadium[roomNo].push(new Wall(590, 360, 630, 360));
-    stadium[roomNo].push(new Wall(640, 360, 640, 180));
-    stadium[roomNo].push(new Wall(630, 180, 590, 180));
+            // left goal
+            stadium[roomNo].push(new WallArc(0, 140, 60, 0, Math.PI/2));
+            stadium[roomNo].push(new WallArc(0, 400, 60, 3/2*Math.PI, 2*Math.PI));
+
+            // right goal
+            stadium[roomNo].push(new WallArc(640, 140, 60, Math.PI/2, Math.PI));
+            stadium[roomNo].push(new WallArc(640, 400, 60, Math.PI, 3/2*Math.PI));
+
+            // goals borders
+            stadium[roomNo].push(new Wall(0, 340, 0, 200));
+            stadium[roomNo].push(new Wall(640, 340, 640, 200));
+            break;
+
+        case 3:
+            // Top walls
+            stadium[roomNo].push(new Wall(0, 80, 100, 80));
+            stadium[roomNo].push(new Wall(100, 80, 140, 120));
+            stadium[roomNo].push(new Wall(140, 120, 240, 120));
+            stadium[roomNo].push(new Wall(240, 120, 280, 80));
+            stadium[roomNo].push(new Wall(280, 80, 360, 80));
+            stadium[roomNo].push(new Wall(360, 80, 400, 120));
+            stadium[roomNo].push(new Wall(400, 120, 500, 120));
+            stadium[roomNo].push(new Wall(500, 120, 540, 80));
+            stadium[roomNo].push(new Wall(540, 80, 640, 80));
+
+            // Bottom walls
+            stadium[roomNo].push(new Wall(0, 460, 100, 460));
+            stadium[roomNo].push(new Wall(100, 460, 140, 420));
+            stadium[roomNo].push(new Wall(140, 420, 240, 420));
+            stadium[roomNo].push(new Wall(240, 420, 280, 460));
+            stadium[roomNo].push(new Wall(280, 460, 360, 460));
+            stadium[roomNo].push(new Wall(360, 460, 400, 420));
+            stadium[roomNo].push(new Wall(400, 420, 500, 420));
+            stadium[roomNo].push(new Wall(500, 420, 540, 460));
+            stadium[roomNo].push(new Wall(540, 460, 640, 460));
+
+            // left walls
+            stadium[roomNo].push(new Wall(0, 200, 70, 260));
+            stadium[roomNo].push(new Wall(70, 260, 70, 280));
+            stadium[roomNo].push(new Wall(0, 340, 70, 280));
+
+            // right walls
+            stadium[roomNo].push(new Wall(640, 200, 570, 260));
+            stadium[roomNo].push(new Wall(570, 260, 570, 280));
+            stadium[roomNo].push(new Wall(640, 340, 570, 280));
+
+            // goals borders
+            stadium[roomNo].push(new Wall(0, 80, 0, 200));
+            stadium[roomNo].push(new Wall(0, 460, 0, 340));
+            stadium[roomNo].push(new Wall(640, 80, 640, 200));
+            stadium[roomNo].push(new Wall(640, 460, 640, 340));
+            break;
+
+        case 4:
+            // Top walls
+            stadium[roomNo].push(new Wall(0, 80, 100, 80));
+            stadium[roomNo].push(new WallArc(140, 80, 40, Math.PI/2, Math.PI));
+            stadium[roomNo].push(new Wall(140, 120, 240, 120));
+            stadium[roomNo].push(new WallArc(240, 80, 40, 0, Math.PI/2));
+            stadium[roomNo].push(new Wall(280, 80, 360, 80));
+            stadium[roomNo].push(new WallArc(400, 80, 40, Math.PI/2, Math.PI));
+            stadium[roomNo].push(new Wall(400, 120, 500, 120));
+            stadium[roomNo].push(new WallArc(500, 80, 40, 0, Math.PI/2));
+            stadium[roomNo].push(new Wall(540, 80, 640, 80));
+
+            // Bottom walls
+            stadium[roomNo].push(new Wall(0, 460, 100, 460));
+            stadium[roomNo].push(new WallArc(140, 460, 40, Math.PI, 3/2*Math.PI));
+            stadium[roomNo].push(new Wall(140, 420, 240, 420));
+            stadium[roomNo].push(new WallArc(240, 460, 40, 3/2*Math.PI, 2*Math.PI));
+            stadium[roomNo].push(new Wall(280, 460, 360, 460));
+            stadium[roomNo].push(new WallArc(400, 460, 40, Math.PI, 3/2*Math.PI));
+            stadium[roomNo].push(new Wall(400, 420, 500, 420));
+            stadium[roomNo].push(new WallArc(500, 460, 40, 3/2*Math.PI, 2*Math.PI));
+            stadium[roomNo].push(new Wall(540, 460, 640, 460));
+
+            // left wall
+            stadium[roomNo].push(new WallArc(0, 270, 70, 3/2*Math.PI, 5/2*Math.PI));
+
+            // right wall
+            stadium[roomNo].push(new WallArc(640, 270, 70, Math.PI/2, 3/2*Math.PI));
+
+            // goals borders
+            stadium[roomNo].push(new Wall(0, 80, 0, 200));
+            stadium[roomNo].push(new Wall(0, 460, 0, 340));
+            stadium[roomNo].push(new Wall(640, 80, 640, 200));
+            stadium[roomNo].push(new Wall(640, 460, 640, 340));
+            break;
+
+        default:
+            // Top / bottom walls
+            stadium[roomNo].push(new Wall(60, 80, 580, 80));
+            stadium[roomNo].push(new Wall(60, 460, 580, 460));
+
+            stadium[roomNo].push(new Wall(60, 80, 60, 180));
+            stadium[roomNo].push(new Wall(60, 460, 60, 360));
+            stadium[roomNo].push(new Wall(580, 80, 580, 180));
+            stadium[roomNo].push(new Wall(580, 460, 580, 360));
+
+            stadium[roomNo].push(new Wall(50, 360, 10, 360));
+            stadium[roomNo].push(new Wall(10, 180, 50, 180));
+            stadium[roomNo].push(new Wall(590, 360, 630, 360));
+            stadium[roomNo].push(new Wall(630, 180, 590, 180));
+
+            // goals borders
+            stadium[roomNo].push(new Wall(0, 360, 0, 180));
+            stadium[roomNo].push(new Wall(640, 360, 640, 180));
+            break;
+    }
 
     // compute positions and emit to clients
     let stadiumParams = [];
@@ -1275,7 +1392,7 @@ function newStadium(roomNo)
     }
 
     io.emit('newStadium', {walls : stadiumParams});
-    console.log(stadiumParams);  
+    //console.log(stadiumParams);  
 }
 
 function playersReadyInRoom(room)

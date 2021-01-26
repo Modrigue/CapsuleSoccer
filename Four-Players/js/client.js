@@ -35,6 +35,7 @@ let clientBalls = {};
 let obstacles = [];
 let stadium = [];
 let selfID;
+buildStadiumMarks();
 
 socket.on('connect', () => {
     selfID = socket.id;
@@ -122,15 +123,6 @@ socket.on('newStadium', stadiumParams => {
         for (let wall of stadium)
             wall.remove();
 
-    // Marks
-    new LineMark(60, 180, 60, 360, COLOR_MARK);
-    new LineMark(320, 81, 320, 459, COLOR_MARK);
-    new LineMark(580, 180, 580, 360, COLOR_MARK);
-    new CircleMark(320, 270, 60, COLOR_MARK);
-    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
-    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
-
-    // Walls
     for (let typePos of stadiumParams.walls)
     {
         const wallType = typePos[0];
@@ -197,6 +189,16 @@ socket.on('updateScore', scorerId => {
         }
     }
 })
+
+function buildStadiumMarks()
+{
+    new LineMark(60, 180, 60, 360, COLOR_MARK);
+    new LineMark(320, 81, 320, 459, COLOR_MARK);
+    new LineMark(580, 180, 580, 360, COLOR_MARK);
+    new CircleMark(320, 270, 60, COLOR_MARK);
+    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+}
 
 requestAnimationFrame(renderOnly);
 
