@@ -30,10 +30,10 @@ const gameAreaDiv = document.getElementById('gameArea');
 
 
 // init game field
-buildStadium();
 let football;
 let clientBalls = {};
 let obstacles = [];
+let stadium = [];
 let selfID;
 
 socket.on('connect', () => {
@@ -114,6 +114,36 @@ socket.on('newObstacles', obstacleParams => {
         obstacle.setImages([OBSTACLE_IMG]);
         obstacle.color = COLOR_WALL;
         obstacles.push(obstacle); 
+    }
+})
+
+socket.on('newStadium', stadiumParams => {
+    if(stadium !== undefined)
+        for (let wall of stadium)
+            wall.remove();
+
+    // Marks
+    new LineMark(60, 180, 60, 360, COLOR_MARK);
+    new LineMark(320, 81, 320, 459, COLOR_MARK);
+    new LineMark(580, 180, 580, 360, COLOR_MARK);
+    new CircleMark(320, 270, 60, COLOR_MARK);
+    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+
+    // Walls
+    for (let typePos of stadiumParams.walls)
+    {
+        const wallType = typePos[0];
+        switch(wallType)
+        {
+            case WALL_TYPES.WALL:
+                stadium.push(new Wall(typePos[1].x, typePos[1].y, typePos[2].x, typePos[2].y, COLOR_WALL));
+                break;
+
+            case WALL_TYPES.WALL_ARC:
+                stadium.push(new WallArc(typePos[1].x, typePos[1].y, typePos[2], typePos[3], typePos[4], COLOR_WALL));
+                break;
+        }
     }
 })
 
@@ -207,33 +237,6 @@ function userInterface()
         const nameText = (clientBalls[id].name) ? clientBalls[id].name : ""
         ctx.fillText(nameText, xPos, yPos);
     }
-}
-
-function buildStadium()
-{
-    // Marks
-    new LineMark(60, 180, 60, 360, COLOR_MARK);
-    new LineMark(320, 81, 320, 459, COLOR_MARK);
-    new LineMark(580, 180, 580, 360, COLOR_MARK);
-    new CircleMark(320, 270, 60, COLOR_MARK);
-    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
-    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
-
-    // Top / bottom walls
-    new Wall(60, 80, 580, 80, COLOR_WALL);
-    new Wall(60, 460, 580, 460, COLOR_WALL);
-
-    new Wall(60, 80, 60, 180, COLOR_WALL);
-    new Wall(60, 460, 60, 360, COLOR_WALL);
-    new Wall(580, 80, 580, 180, COLOR_WALL);
-    new Wall(580, 460, 580, 360, COLOR_WALL);
-
-    new Wall(50, 360, 10, 360, COLOR_WALL);
-    new Wall(0, 360, 0, 180, COLOR_WALL);
-    new Wall(10, 180, 50, 180, COLOR_WALL);
-    new Wall(590, 360, 630, 360, COLOR_WALL);
-    new Wall(640, 360, 640, 180, COLOR_WALL);
-    new Wall(630, 180, 590, 180, COLOR_WALL);
 }
 
 function createFootball(footballParams)

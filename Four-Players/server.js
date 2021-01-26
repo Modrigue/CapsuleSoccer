@@ -21,6 +21,11 @@ let BALL_RADIUS = newRandomBallRadius(BALL_TYPES.BALL);
 let BALL_MASS = newRandomBallMass();
 const BALL_CAPSULE_LENGTH = 60;
 
+const WALL_TYPES = {
+    WALL: 'wall',
+    WALL_ARC: 'wall_arc'
+}
+
 const BODIES = [];
 const COLLISIONS = [];
 
@@ -155,6 +160,37 @@ class Circle{
             ctx.fillStyle = color;
             ctx.fill();
         }
+        ctx.fillStyle = "";
+        ctx.closePath();
+    }
+}
+
+class Arc{
+    constructor(x, y, r, a_start, a_end){
+        this.vertex = [];
+        this.pos = new Vector(x, y);
+        this.r = r;
+        this.angle_start = a_start;
+        this.angle_end = a_end;
+    }
+
+    draw(color, fill = true, image = null, angle = 0, action = false, actionImage = null)
+    {
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.r, this.angle_start, this.angle_end);
+        const drawColor = (color === "") ? "black" : color;
+
+        if (!fill)
+        {
+            ctx.strokeStyle = drawColor;
+            ctx.stroke();
+        }
+        else
+        {
+            ctx.fillStyle = drawColor;
+            ctx.fill();
+        }
+
         ctx.fillStyle = "";
         ctx.closePath();
     }
@@ -563,6 +599,20 @@ class Wall extends Body{
     }
 }
 
+class WallArc extends Body
+{
+    constructor(x, y, r, a_start, a_end)
+    {
+        super();
+        //this.comp = [new Arc(x, y, r, a_start, a_end)]; // causes error for collisions
+        this.comp = [new Circle(x, y, r)];
+        this.pos = new Vector(x, y);
+
+        this.a_start = a_start;
+        this.a_end = a_end;
+    }
+}
+
 class LineMark extends Body{
     constructor(x1, y1, x2, y2, color = "White"){
         super();
@@ -928,7 +978,7 @@ else
     app.get('/', (req, res) => res.send('Hello World!'))
 }
 
-buildStadium();
+let stadium = {};
 let playerReg = {};
 let serverBalls = {};
 let football = {};
@@ -959,15 +1009,20 @@ function connected(socket)
     initPlayerPosition(socket.id);
     playerReg[socket.id] = {id: socket.id, x: serverBalls[socket.id].pos.x, y: serverBalls[socket.id].pos.y, roomNo: roomNo, no: clientNoInRoom};
 
-    // create ball if all players present
+    // initialize game if all players present
     if (clientNoInRoom == NB_PLAYERS_IN_GAME)
     {
+        // stadium
+        newStadium(roomNo);
+        stadium[roomNo].layer = roomNo;
+
+        // ball
         football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
         football[roomNo].layer = roomNo;
         io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y,
             r: BALL_RADIUS, m: BALL_MASS, angle: football[roomNo].angle});
-
-        // set dummy positions for obstacles
+        
+        // obstacles: set dummy positions
         obstacles[roomNo] = [];
         for (let i = 0; i < 4; i++)
             obstacles[roomNo].push(new Star6(-100, -100, 15, 0));
@@ -982,14 +1037,18 @@ function connected(socket)
     socket.on('disconnect', function(){
         if(serverBalls[socket.id] !== undefined && football[serverBalls[socket.id].layer])
         {
-            const room = serverBalls[socket.id].layer;
+            const roomNo = serverBalls[socket.id].layer;
 
-            football[room].remove();
-            delete football[football[room]];
+            football[roomNo].remove();
+            delete football[football[roomNo]];
 
-            for (let obstacle of obstacles[room])
+            for (let wall of stadium[roomNo])
+                wall.remove();
+            delete stadium[stadium[roomNo]];
+
+            for (let obstacle of obstacles[roomNo])
                 obstacle.remove();
-            delete obstacles[football[room]];
+            delete obstacles[obstacles[roomNo]];
         }
         serverBalls[socket.id].remove();
         io.to(serverBalls[socket.id].layer).emit('deletePlayer', playerReg[socket.id]);
@@ -1176,23 +1235,47 @@ function initPlayerPosition(id)
     serverBalls[id].setPosition(xStart, yStart, orientation);
 }
 
-function buildStadium()
+function newStadium(roomNo)
 {
+    stadium[roomNo] = [];
+
+    // WARNING: WALLS MUST NOT INTERSECT WITH EACH OTHERS!!
+
     // Top / bottom walls
-    new Wall(60, 80, 580, 80);
-    new Wall(60, 460, 580, 460);
+    stadium[roomNo].push(new Wall(60, 80, 580, 80));
+    stadium[roomNo].push(new Wall(60, 460, 580, 460));
 
-    new Wall(60, 80, 60, 180);
-    new Wall(60, 460, 60, 360);
-    new Wall(580, 80, 580, 180);
-    new Wall(580, 460, 580, 360);
+    stadium[roomNo].push(new Wall(60, 80, 60, 180));
+    stadium[roomNo].push(new Wall(60, 460, 60, 360));
+    stadium[roomNo].push(new Wall(580, 80, 580, 180));
+    stadium[roomNo].push(new Wall(580, 460, 580, 360));
 
-    new Wall(50, 360, 10, 360);
-    new Wall(0, 360, 0, 180);
-    new Wall(10, 180, 50, 180);
-    new Wall(590, 360, 630, 360);
-    new Wall(640, 360, 640, 180);
-    new Wall(630, 180, 590, 180);
+    stadium[roomNo].push(new Wall(50, 360, 10, 360));
+    stadium[roomNo].push(new Wall(0, 360, 0, 180));
+    stadium[roomNo].push(new Wall(10, 180, 50, 180));
+    stadium[roomNo].push(new Wall(590, 360, 630, 360));
+    stadium[roomNo].push(new Wall(640, 360, 640, 180));
+    stadium[roomNo].push(new Wall(630, 180, 590, 180));
+
+    // compute positions and emit to clients
+    let stadiumParams = [];
+    for (const wall of stadium[roomNo])
+    {
+        const wallType = (wall instanceof Wall) ? WALL_TYPES.WALL : WALL_TYPES.WALL_ARC;
+        switch(wallType)
+        {
+            case WALL_TYPES.WALL:
+                stadiumParams.push([wallType, wall.comp[0].vertex[0], wall.comp[0].vertex[1]]);
+                break;
+            
+            case WALL_TYPES.WALL_ARC:
+                stadiumParams.push([wallType, wall.pos, wall.comp[0].r, wall.a_start, wall.a_end]);
+                break;
+        }
+    }
+
+    io.emit('newStadium', {walls : stadiumParams});
+    console.log(stadiumParams);  
 }
 
 function playersReadyInRoom(room)

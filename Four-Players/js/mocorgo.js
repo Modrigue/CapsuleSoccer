@@ -688,6 +688,19 @@ class Wall extends Body{
     }
 }
 
+class WallArc extends Body
+{
+    constructor(x, y, r, a_start, a_end, color = "Black")
+    {
+        super();
+        this.comp = [new Arc(x, y, r, a_start, a_end)];
+        this.pos = new Vector(x, y);
+
+        this.color = color;
+        this.fill = false;
+    }
+}
+
 class LineMark extends Body{
     constructor(x1, y1, x2, y2, color = "White")
     {
@@ -1074,4 +1087,9 @@ function drawRotatedImage(context, image, w, h, angleInRad, xCenter, yCenter, dx
 const BALL_TYPES = {
     BALL: 'ball',
     CAPSULE: 'capsule'
+}
+
+const WALL_TYPES = {
+    WALL: 'wall',
+    WALL_ARC: 'wall_arc'
 }
