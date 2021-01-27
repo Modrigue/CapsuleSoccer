@@ -1103,11 +1103,12 @@ function serverLoop(){
             for (let id in serverBalls)
             {
                 if (serverBalls[id].layer === room){
-                    io.to(room).emit('positionUpdate', {
+                    io.to(room).emit('updatePlayersPositions', {
                         id: id,
                         x: serverBalls[id].pos.x,
                         y: serverBalls[id].pos.y,
-                        angle: serverBalls[id].angle
+                        angle: serverBalls[id].angle,
+                        up: serverBalls[id].up
                     });
                 }
             }
