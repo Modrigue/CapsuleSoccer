@@ -152,11 +152,12 @@ socket.on('updateFootball', footballParams => {
     }
 })
 
-socket.on('positionUpdate', playerPos => {
+socket.on('updatePlayersPositions', playerPos => {
     for(let id in clientBalls)
     {
         if(clientBalls[id] !== undefined && id === playerPos.id){
             clientBalls[id].setPosition(playerPos.x, playerPos.y, playerPos.angle);
+            clientBalls[id].up = playerPos.up; // for action image display
         }
     }
 })
