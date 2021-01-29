@@ -7,3 +7,5 @@
 /RoomSwitch/node_modules
 /Four-Players/node_modules
 /Rocket-Soccer/node_modules
+
+.vscode/
