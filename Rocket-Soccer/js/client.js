@@ -202,9 +202,19 @@ socket.on('scoring', scorerId => {
 
                 if(clientBalls[id].score === NB_POINTS_MATCH)
                 {
-                    document.getElementById('winning').innerHTML = 
-                    `The winner is ${clientBalls[id].name}!!!
-                    <br>LET'S PLAY AGAIN!`
+                    let winnerText = "";
+                    if (NB_PLAYERS_IN_GAME <= 2)
+                        winnerText = `The winner is ${clientBalls[id].name}!!! <br>LET'S PLAY AGAIN!`;
+                    else
+                    {
+                        let winningTeam = (clientBalls[id].no % 2);
+                        if (winningTeam == 0)
+                            winningTeam = 2;
+                        
+                        winnerText = `The winner is team ${winningTeam}!!! <br>LET'S PLAY AGAIN!`;
+                    }
+
+                    document.getElementById('winning').innerHTML = winnerText
                 }
             }
         }
