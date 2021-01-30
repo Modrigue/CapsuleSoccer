@@ -35,15 +35,41 @@ let clientBalls = {};
 let obstacles = [];
 let stadium = [];
 let selfID;
+let room = -1;
+let nbPlayersReadyInRoom = 0;
 buildStadiumMarks();
 
 socket.on('connect', () => {
     selfID = socket.id;
-})
+});
 
 socket.on('setNbPointsMatch', nbPoints => {
     NB_POINTS_MATCH = nbPoints;
-})
+});
+
+socket.on('newConnection', nbPlayersReady => {
+    nbPlayersReadyInRoom = nbPlayersReady;
+    document.getElementById('playerWelcome').innerText =
+    `Hi, enter your name and start to play`;
+
+    updateWelcomeGUI();
+    document.getElementById('userName').focus();
+});
+
+socket.on('updatePlayersReady', nbPlayersReady => {
+
+    nbPlayersReadyInRoom = nbPlayersReady;
+    updateWelcomeGUI();
+});
+
+function updateWelcomeGUI()
+{
+    document.getElementById('playerGameInfo').innerText =
+    `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME} players - Match in ${NB_POINTS_MATCH} points`;
+
+    const hasMaxNbPlayers = (nbPlayersReadyInRoom >= NB_PLAYERS_IN_GAME);
+    document.getElementById('buttonSubmit').disabled = hasMaxNbPlayers;
+}
 
 socket.on('updateConnections', player => {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -70,13 +96,6 @@ socket.on('updateConnections', player => {
 
         if(player.id === selfID)
         {
-            document.getElementById('playerWelcome').innerText =
-                `Hi, enter your name and start to play (Room ${player.roomNo})`
-                document.getElementById('playerGameInfo').innerText =
-                `${NB_PLAYERS_IN_GAME} players - Match in ${NB_POINTS_MATCH} points`
-            
-            document.getElementById('userName').focus();
-
             userInput(clientBalls[player.id]);
         }
     }
@@ -87,8 +106,6 @@ socket.on('deletePlayer', player => {
     {
         clientBalls[player.id].remove();
         delete clientBalls[player.id];
-        football.remove();
-        delete football;
     }
 })
 
@@ -162,7 +179,7 @@ socket.on('updatePlayersPositions', playerPos => {
     }
 })
 
-socket.on('updateScore', scorerId => {
+socket.on('scoring', scorerId => {
     if (scorerId === null)
     {
         for (let id in clientBalls)
@@ -191,6 +208,14 @@ socket.on('updateScore', scorerId => {
     }
 })
 
+socket.on('updateScore', scoreParams => {
+
+    const id = scoreParams.id;
+    if (clientBalls.hasOwnProperty(id))
+        clientBalls[id].score = scoreParams.score;
+    
+});
+
 function buildStadiumMarks()
 {
     new LineMark(60, 180, 60, 360, COLOR_MARK);
@@ -210,6 +235,10 @@ function userInterface()
     ctx.textAlign = "center";
     ctx.fillStyle = "dodgerblue";
     ctx.fillText("Rocket Soccer", 320, 30);
+
+    // disabled: display room
+    //ctx.font = "italic 20px Arial";
+    //ctx.fillText(`Room ${room}`, 320, 60);
 
     for (let id in clientBalls)
     {
@@ -283,13 +312,29 @@ function getPlayerColor(no)
 form.onsubmit = function(e)
 {
     e.preventDefault();
-    form.style.display = 'none';
-    gameAreaDiv.style.display = 'block';
-    document.body.style.backgroundColor = "Black";
-    canvas.focus();
-    clientBalls[selfID].name = document.getElementById('userName').value;
-    socket.emit('clientName', clientBalls[selfID].name);
-    return false;
+
+    const name = document.getElementById('userName').value;
+    const roomCandidate = 1; //document.getElementById('userRoom').value;
+
+    socket.emit('clientName', {name: name, room: roomCandidate}, (response) => {
+        
+        if (response.error)
+        {
+            alert(response.error);
+            return true;
+        }
+        else
+        {
+            // ok, enter room
+            room = roomCandidate;
+            form.style.display = 'none';
+            gameAreaDiv.style.display = 'block';
+            document.body.style.backgroundColor = "Black";
+            canvas.focus();
+            
+            return false;
+        }
+      });
 }
 
 function isNumeric(value)

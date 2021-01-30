@@ -984,76 +984,69 @@ let serverBalls = {};
 let football = {};
 let obstacles = {};
 let clientNo = 0;
-let roomNo;
 let gameIsOn = {};
+let rooms = {};
 
 io.on('connection', connected);
 setInterval(serverLoop, 1000/60);
 
 function connected(socket)
 {
-    clientNo++;
-    roomNo = Math.ceil(clientNo / NB_PLAYERS_IN_GAME);
-    socket.join(roomNo);
-    console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
+    const room = 1;
+    const nbPlayersReady = getNbPlayersReadyInRoom(room)   
+    io.emit('newConnection', nbPlayersReady);
 
-    const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
-    let clientNoInRoom = (clientNo % NB_PLAYERS_IN_GAME);
-    if (clientNoInRoom == 0)
-        clientNoInRoom = NB_PLAYERS_IN_GAME;
-
-    // initialize player pad
-    serverBalls[socket.id] = new Capsule(320 + PAD_LENGTH/2, 270 - yPadDiff/2, 320 - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
-    serverBalls[socket.id].no = clientNoInRoom;
-    serverBalls[socket.id].layer = roomNo;
-    initPlayerPosition(socket.id);
-    playerReg[socket.id] = {id: socket.id, x: serverBalls[socket.id].pos.x, y: serverBalls[socket.id].pos.y, roomNo: roomNo, no: clientNoInRoom};
-
-    // initialize game if all players present
-    if (clientNoInRoom == NB_PLAYERS_IN_GAME)
-    {
-        // stadium
-        newRandomStadium(roomNo);
-        stadium[roomNo].layer = roomNo;
-
-        // ball
-        football[roomNo] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
-        football[roomNo].layer = roomNo;
-        io.emit('updateFootball', {x: football[roomNo].pos.x, y: football[roomNo].pos.y,
-            r: BALL_RADIUS, m: BALL_MASS, angle: football[roomNo].angle});
-        
-        // obstacles: set dummy positions
-        obstacles[roomNo] = [];
-        for (let i = 0; i < 4; i++)
-            obstacles[roomNo].push(new Star6(-100, -100, 15, 0));
-        obstacles[roomNo].layer = roomNo;
-    }
-
-    for (let id in serverBalls)
-    {
-        io.to(serverBalls[id].layer).emit('updateConnections', playerReg[id]);
-    }
-
+    // disconnection
     socket.on('disconnect', function(){
-        if(serverBalls[socket.id] !== undefined && football[serverBalls[socket.id].layer])
+        if(serverBalls[socket.id] !== undefined)
         {
-            const roomNo = serverBalls[socket.id].layer;
+            const room = serverBalls[socket.id].layer;
 
-            football[roomNo].remove();
-            delete football[football[roomNo]];
+            serverBalls[socket.id].remove();
+            io.to(serverBalls[socket.id].layer).emit('deletePlayer', playerReg[socket.id]);
+            delete serverBalls[socket.id];
+            delete playerReg[socket.id];
 
-            for (let wall of stadium[roomNo])
-                wall.remove();
-            delete stadium[stadium[roomNo]];
+            let nbPlayersReadyInRoom = 0;
+            if (rooms.hasOwnProperty(room))
+            {
+                // delete player in room
+                deletePlayerInRoom(room, socket.id);
+                nbPlayersReadyInRoom = getNbPlayersReadyInRoom(room);                
 
-            for (let obstacle of obstacles[roomNo])
-                obstacle.remove();
-            delete obstacles[obstacles[roomNo]];
+                // if no players left, delete complete room data
+                if (nbPlayersReadyInRoom == 0)
+                {                                 
+                    delete rooms[room];
+
+                    if (football[room])
+                    {
+                        football[room].remove();
+                        delete football[room];
+                    }
+
+                    if (stadium[room])
+                    {
+                        for (let wall of stadium[room])
+                            wall.remove();
+                        delete stadium[room];
+                    }
+
+                    if (obstacles[room])
+                    {
+                        for (let obstacle of obstacles[room])
+                            obstacle.remove();
+                        delete obstacles[room];
+                    }
+
+                    if (gameIsOn.hasOwnProperty(room))
+                        delete gameIsOn[room];
+                }
+            }
+
+            // update nb. players ready
+            io.emit('updatePlayersReady', nbPlayersReadyInRoom);
         }
-        serverBalls[socket.id].remove();
-        io.to(serverBalls[socket.id].layer).emit('deletePlayer', playerReg[socket.id]);
-        delete serverBalls[socket.id];
-        delete playerReg[socket.id];
         console.log(playerReg);
         console.log(`Number of players: ${Object.keys(playerReg).length}`)
         console.log(`Number of balls: ${Object.keys(football).length}`)
@@ -1062,13 +1055,11 @@ function connected(socket)
         io.emit('updateConnections', playerReg);
     })
 
-    console.log(playerReg);
-        console.log(`Number of players: ${Object.keys(playerReg).length}`)
-        console.log(`Number of balls: ${Object.keys(football).length}`)
-        //console.log(`Number of BODIES: ${BODIES.length-12}`);
-        console.log(`Joined players ever: ${clientNo}`)
-
+    // user inputs
     socket.on('userCommands', data => {
+        if (!serverBalls.hasOwnProperty(socket.id))
+            return;
+
         serverBalls[socket.id].left = data.left;
         serverBalls[socket.id].up = data.up;
         serverBalls[socket.id].right = data.right;
@@ -1076,9 +1067,91 @@ function connected(socket)
         serverBalls[socket.id].action = data.action;
     })
 
-    socket.on('clientName', data => {
-        serverBalls[socket.id].name = data;
-        console.log(`${data} is in room no.${serverBalls[socket.id].layer}`);
+    // player enters
+    socket.on('clientName', (data, response) => {
+
+        // disabled: reqires to handle bodies / collisions per room
+        //const room = parseInt(data.room);
+        const room = 1;
+        const clientNoInRoom = createNextPlayerInRoom(room, socket.id);
+        if (clientNoInRoom < 0)
+        {
+            response({
+                error: "Maximum number of players reached, please wait..."
+              });
+            return;
+        }
+
+        //rooms[room].push(socket.id);
+        //console.log(rooms);
+        
+        clientNo++;
+        socket.join(room);
+        console.log(`New player no.: ${clientNo}, room no.: ${room}`);
+
+        const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
+
+        // initialize player pad
+        serverBalls[socket.id] = new Capsule(320 + PAD_LENGTH/2, 270 - yPadDiff/2, 320 - PAD_LENGTH/2, 270 - yPadDiff/2, PAD_WIDTH, 0, PAD_MASS);
+        serverBalls[socket.id].no = clientNoInRoom;
+        serverBalls[socket.id].layer = room;
+        initPlayerPosition(socket.id);
+        playerReg[socket.id] = {id: socket.id, x: serverBalls[socket.id].pos.x, y: serverBalls[socket.id].pos.y, room: room, no: clientNoInRoom};
+
+        // initialize game if all players present
+        if (clientNoInRoom == NB_PLAYERS_IN_GAME)
+        {
+            // stadium
+            if (!stadium.hasOwnProperty(room))
+            {
+                newRandomStadium(room);
+                stadium[room].layer = room;
+            }
+
+            // ball
+            if (!football.hasOwnProperty(room))
+            {
+                football[room] = new Ball(320, 270, BALL_RADIUS, BALL_MASS);
+                football[room].layer = room;
+                io.to(room).emit('updateFootball', {x: football[room].pos.x, y: football[room].pos.y,
+                    r: BALL_RADIUS, m: BALL_MASS, angle: football[room].angle});
+            }
+            
+            // obstacles: set dummy positions
+            if (!obstacles.hasOwnProperty(room))
+            {
+                obstacles[room] = [];
+                for (let i = 0; i < 4; i++)
+                    obstacles[room].push(new Star6(-100, -100, 15, 0));
+                obstacles[room].layer = room;
+            }
+        }
+
+        // send current nb. of players ready
+        io.emit('updatePlayersReady', clientNoInRoom);
+
+        for (let id in serverBalls)
+        {
+            io.to(serverBalls[id].layer).emit('updateConnections', playerReg[id]);
+        }
+
+        // if game was already on, re-sent scores, stadium and obstacles data
+        if (gameIsOn.hasOwnProperty(room) && gameIsOn[room] === true)
+        {
+            // TODO: refactor scores as own entry
+            // reset all scores
+            for(let id in serverBalls){
+                if(serverBalls[id].layer == room)
+                    io.to(room).emit('updateScore', {id: id, score: 0});
+            }
+
+            sendStadium(room);
+            sendObstacles(room);
+        }
+
+        serverBalls[socket.id].name = data.name;
+        //console.log(`${data} is in room no.${serverBalls[socket.id].layer}`);
+        console.log(`${data.name} is in room no. ${room}`);
         if (playersReadyInRoom(serverBalls[socket.id].layer) === NB_PLAYERS_IN_GAME)
         {
             for (let id in serverBalls){
@@ -1090,19 +1163,70 @@ function connected(socket)
         } else {
             gameIsOn[serverBalls[socket.id].layer] = false;
         }
+
+        response({status: "ok"});
     })
+}
+
+function createNextPlayerInRoom(room, socketID)
+{
+    if (!rooms.hasOwnProperty(room))
+    {
+        // create new room
+        rooms[room] = {};
+        for (let i = 1; i <= NB_PLAYERS_IN_GAME; i++)
+            rooms[room][i] = "";
+    }
+    else if (getNbPlayersReadyInRoom(room) >= NB_PLAYERS_IN_GAME)
+    {
+        // room full
+        return -1;
+    }
+
+    let playerNoNext = 0;
+    for (const [playerNo, playersID] of Object.entries(rooms[room]))
+    {
+        playerNoNext++;
+        if (playersID == "")
+        {
+            rooms[room][playerNo] = socketID;
+            break;
+        }
+    }
+
+    return playerNoNext;
+}
+
+function deletePlayerInRoom(room, socketID)
+{
+    if (!rooms.hasOwnProperty(room))
+        return;
+
+    for (const [playerNo, playerID] of Object.entries(rooms[room]))
+        if (playerID == socketID)
+            rooms[room][playerNo] = "";
+}
+
+function getNbPlayersReadyInRoom(room)
+{
+    if (!rooms.hasOwnProperty(room))
+        return 0;
+    
+    return (Object.values(rooms[room]).filter((playersID) => (playersID != ""))).length;
 }
 
 function serverLoop(){
     userInteraction();
     physicsLoop();
-    for (let room = 1; room <= roomNo; room++){
+    for (const room of Object.keys(rooms))
+    {
         if (gameIsOn[room] === true)
         {
             gameLogic(room);
-            for (let id in serverBalls)
+            for (const [playerNo, id] of Object.entries(rooms[room]))
             {
-                if (serverBalls[id].layer === room){
+                if (id != "" && serverBalls[id] && serverBalls[id].layer == room)
+                {
                     io.to(room).emit('updatePlayersPositions', {
                         id: id,
                         x: serverBalls[id].pos.x,
@@ -1112,6 +1236,7 @@ function serverLoop(){
                     });
                 }
             }
+
             io.to(room).emit('updateFootball', {
                 x: football[room].pos.x,
                 y: football[room].pos.y,
@@ -1129,7 +1254,7 @@ function gameLogic(room){
         scoring(room);
     }
     for(let id in serverBalls){
-        if(serverBalls[id].score === NB_POINTS_MATCH && serverBalls[id].layer === room){
+        if(serverBalls[id].score === NB_POINTS_MATCH && serverBalls[id].layer == room){
             gameOver(room);
         }
     }
@@ -1137,10 +1262,10 @@ function gameLogic(room){
 
 function gameOver(room){
     roundSetup(room);
-    io.to(room).emit('updateScore', null);
+    io.to(room).emit('scoring', null);
     setTimeout(() => {
         for(let id in serverBalls){
-            if(serverBalls[id].layer === room){
+            if(serverBalls[id].layer == room){
                 serverBalls[id].score = 0;
             }
         }
@@ -1149,12 +1274,14 @@ function gameOver(room){
 
 function scoring(room){
     let scorerId;
+    console.log('Score in room', room);
+    
     if(football[room].pos.x < 45)
     {
         for(let id in serverBalls)
         {
             const rightTeamPlayerNo = 2 * Math.floor(NB_PLAYERS_IN_GAME / 2);
-            if (serverBalls[id].no === rightTeamPlayerNo && serverBalls[id].layer === room)
+            if (serverBalls[id].no == rightTeamPlayerNo && serverBalls[id].layer == room)
             {
                 serverBalls[id].score++;
                 scorerId = id;
@@ -1165,7 +1292,7 @@ function scoring(room){
     if(football[room].pos.x > 595)
     {
         for(let id in serverBalls){
-            if (serverBalls[id].no === 1 && serverBalls[id].layer === room)
+            if (serverBalls[id].no === 1 && serverBalls[id].layer == room)
             {
                 serverBalls[id].score++;
                 scorerId = id;
@@ -1174,20 +1301,20 @@ function scoring(room){
         }
     }
     roundSetup(room);
-    io.to(room).emit('updateScore', scorerId);
+    io.to(room).emit('scoring', scorerId);
 }
 
 function roundSetup(room)
 {
     // reset players position
     for(let id in serverBalls)      
-        if (serverBalls[id].layer === room && isNumeric(serverBalls[id].no))
+        if (serverBalls[id].layer == room && isNumeric(serverBalls[id].no))
             initPlayerPosition(id);
 
     // generate new random ball
     football[room].remove();
     football[room] = newRandomBall();
-    io.emit('newFootball', {
+    io.to(room).emit('newFootball', {
         type: (football[room] instanceof Capsule) ? BALL_TYPES.CAPSULE : BALL_TYPES.ball,
         x: football[room].pos.x,
         y: football[room].pos.y,
@@ -1206,11 +1333,19 @@ function roundSetup(room)
         obstacle.remove();
     obstacles[room] = newRandomObstacles();
 
+    sendObstacles(room);
+}
+
+function sendObstacles(room)
+{
+    if (!obstacles.hasOwnProperty(room))
+        return;
+
     let obstaclesPos = [];
     for (const obstacle of obstacles[room])
         obstaclesPos.push(new Vector(obstacle.pos.x, obstacle.pos.y));
 
-    io.emit('newObstacles', {positions : obstaclesPos, r: obstacles[room][0].r});
+    io.to(room).emit('newObstacles', {positions : obstaclesPos, r: obstacles[room][0].r});
 }
 
 function initPlayerPosition(id)
@@ -1241,9 +1376,9 @@ function initPlayerPosition(id)
     serverBalls[id].setPosition(xStart, yStart, orientation);
 }
 
-function newRandomStadium(roomNo)
+function newRandomStadium(room)
 {
-    stadium[roomNo] = [];
+    stadium[room] = [];
 
     // WARNING: WALLS MUST NOT INTERSECT WITH EACH OTHERS!!
 
@@ -1252,132 +1387,140 @@ function newRandomStadium(roomNo)
     {
         case 2:
             // Top walls
-            stadium[roomNo].push(new Wall(60, 80, 280, 80));
-            stadium[roomNo].push(new Wall(360, 80, 580, 80));
-            stadium[roomNo].push(new WallArc(320, 80, 40, 0, Math.PI));
-            stadium[roomNo].push(new Wall(60, 80, 60, 140));
-            stadium[roomNo].push(new Wall(580, 80, 580, 140));
+            stadium[room].push(new Wall(60, 80, 280, 80));
+            stadium[room].push(new Wall(360, 80, 580, 80));
+            stadium[room].push(new WallArc(320, 80, 40, 0, Math.PI));
+            stadium[room].push(new Wall(60, 80, 60, 140));
+            stadium[room].push(new Wall(580, 80, 580, 140));
 
             // bottom walls
-            stadium[roomNo].push(new Wall(60, 460, 280, 460));
-            stadium[roomNo].push(new Wall(360, 460, 580, 460));
-            stadium[roomNo].push(new WallArc(320, 460, 40, Math.PI, 2*Math.PI));
-            stadium[roomNo].push(new Wall(60, 460, 60, 400));
-            stadium[roomNo].push(new Wall(580, 460, 580, 400));
+            stadium[room].push(new Wall(60, 460, 280, 460));
+            stadium[room].push(new Wall(360, 460, 580, 460));
+            stadium[room].push(new WallArc(320, 460, 40, Math.PI, 2*Math.PI));
+            stadium[room].push(new Wall(60, 460, 60, 400));
+            stadium[room].push(new Wall(580, 460, 580, 400));
 
             // left goal
-            stadium[roomNo].push(new WallArc(0, 140, 60, 0, Math.PI/2));
-            stadium[roomNo].push(new WallArc(0, 400, 60, 3/2*Math.PI, 2*Math.PI));
+            stadium[room].push(new WallArc(0, 140, 60, 0, Math.PI/2));
+            stadium[room].push(new WallArc(0, 400, 60, 3/2*Math.PI, 2*Math.PI));
 
             // right goal
-            stadium[roomNo].push(new WallArc(640, 140, 60, Math.PI/2, Math.PI));
-            stadium[roomNo].push(new WallArc(640, 400, 60, Math.PI, 3/2*Math.PI));
+            stadium[room].push(new WallArc(640, 140, 60, Math.PI/2, Math.PI));
+            stadium[room].push(new WallArc(640, 400, 60, Math.PI, 3/2*Math.PI));
 
             // goals borders
-            stadium[roomNo].push(new Wall(0, 340, 0, 200));
-            stadium[roomNo].push(new Wall(640, 340, 640, 200));
+            stadium[room].push(new Wall(0, 340, 0, 200));
+            stadium[room].push(new Wall(640, 340, 640, 200));
             break;
 
         case 3:
             // Top walls
-            stadium[roomNo].push(new Wall(0, 80, 100, 80));
-            stadium[roomNo].push(new Wall(100, 80, 140, 120));
-            stadium[roomNo].push(new Wall(140, 120, 240, 120));
-            stadium[roomNo].push(new Wall(240, 120, 280, 80));
-            stadium[roomNo].push(new Wall(280, 80, 360, 80));
-            stadium[roomNo].push(new Wall(360, 80, 400, 120));
-            stadium[roomNo].push(new Wall(400, 120, 500, 120));
-            stadium[roomNo].push(new Wall(500, 120, 540, 80));
-            stadium[roomNo].push(new Wall(540, 80, 640, 80));
+            stadium[room].push(new Wall(0, 80, 100, 80));
+            stadium[room].push(new Wall(100, 80, 140, 120));
+            stadium[room].push(new Wall(140, 120, 240, 120));
+            stadium[room].push(new Wall(240, 120, 280, 80));
+            stadium[room].push(new Wall(280, 80, 360, 80));
+            stadium[room].push(new Wall(360, 80, 400, 120));
+            stadium[room].push(new Wall(400, 120, 500, 120));
+            stadium[room].push(new Wall(500, 120, 540, 80));
+            stadium[room].push(new Wall(540, 80, 640, 80));
 
             // Bottom walls
-            stadium[roomNo].push(new Wall(0, 460, 100, 460));
-            stadium[roomNo].push(new Wall(100, 460, 140, 420));
-            stadium[roomNo].push(new Wall(140, 420, 240, 420));
-            stadium[roomNo].push(new Wall(240, 420, 280, 460));
-            stadium[roomNo].push(new Wall(280, 460, 360, 460));
-            stadium[roomNo].push(new Wall(360, 460, 400, 420));
-            stadium[roomNo].push(new Wall(400, 420, 500, 420));
-            stadium[roomNo].push(new Wall(500, 420, 540, 460));
-            stadium[roomNo].push(new Wall(540, 460, 640, 460));
+            stadium[room].push(new Wall(0, 460, 100, 460));
+            stadium[room].push(new Wall(100, 460, 140, 420));
+            stadium[room].push(new Wall(140, 420, 240, 420));
+            stadium[room].push(new Wall(240, 420, 280, 460));
+            stadium[room].push(new Wall(280, 460, 360, 460));
+            stadium[room].push(new Wall(360, 460, 400, 420));
+            stadium[room].push(new Wall(400, 420, 500, 420));
+            stadium[room].push(new Wall(500, 420, 540, 460));
+            stadium[room].push(new Wall(540, 460, 640, 460));
 
             // left walls
-            stadium[roomNo].push(new Wall(0, 200, 70, 260));
-            stadium[roomNo].push(new Wall(70, 260, 70, 280));
-            stadium[roomNo].push(new Wall(0, 340, 70, 280));
+            stadium[room].push(new Wall(0, 200, 70, 260));
+            stadium[room].push(new Wall(70, 260, 70, 280));
+            stadium[room].push(new Wall(0, 340, 70, 280));
 
             // right walls
-            stadium[roomNo].push(new Wall(640, 200, 570, 260));
-            stadium[roomNo].push(new Wall(570, 260, 570, 280));
-            stadium[roomNo].push(new Wall(640, 340, 570, 280));
+            stadium[room].push(new Wall(640, 200, 570, 260));
+            stadium[room].push(new Wall(570, 260, 570, 280));
+            stadium[room].push(new Wall(640, 340, 570, 280));
 
             // goals borders
-            stadium[roomNo].push(new Wall(0, 80, 0, 200));
-            stadium[roomNo].push(new Wall(0, 460, 0, 340));
-            stadium[roomNo].push(new Wall(640, 80, 640, 200));
-            stadium[roomNo].push(new Wall(640, 460, 640, 340));
+            stadium[room].push(new Wall(0, 80, 0, 200));
+            stadium[room].push(new Wall(0, 460, 0, 340));
+            stadium[room].push(new Wall(640, 80, 640, 200));
+            stadium[room].push(new Wall(640, 460, 640, 340));
             break;
 
         case 4:
             // Top walls
-            stadium[roomNo].push(new Wall(0, 80, 100, 80));
-            stadium[roomNo].push(new WallArc(140, 80, 40, Math.PI/2, Math.PI));
-            stadium[roomNo].push(new Wall(140, 120, 240, 120));
-            stadium[roomNo].push(new WallArc(240, 80, 40, 0, Math.PI/2));
-            stadium[roomNo].push(new Wall(280, 80, 360, 80));
-            stadium[roomNo].push(new WallArc(400, 80, 40, Math.PI/2, Math.PI));
-            stadium[roomNo].push(new Wall(400, 120, 500, 120));
-            stadium[roomNo].push(new WallArc(500, 80, 40, 0, Math.PI/2));
-            stadium[roomNo].push(new Wall(540, 80, 640, 80));
+            stadium[room].push(new Wall(0, 80, 100, 80));
+            stadium[room].push(new WallArc(140, 80, 40, Math.PI/2, Math.PI));
+            stadium[room].push(new Wall(140, 120, 240, 120));
+            stadium[room].push(new WallArc(240, 80, 40, 0, Math.PI/2));
+            stadium[room].push(new Wall(280, 80, 360, 80));
+            stadium[room].push(new WallArc(400, 80, 40, Math.PI/2, Math.PI));
+            stadium[room].push(new Wall(400, 120, 500, 120));
+            stadium[room].push(new WallArc(500, 80, 40, 0, Math.PI/2));
+            stadium[room].push(new Wall(540, 80, 640, 80));
 
             // Bottom walls
-            stadium[roomNo].push(new Wall(0, 460, 100, 460));
-            stadium[roomNo].push(new WallArc(140, 460, 40, Math.PI, 3/2*Math.PI));
-            stadium[roomNo].push(new Wall(140, 420, 240, 420));
-            stadium[roomNo].push(new WallArc(240, 460, 40, 3/2*Math.PI, 2*Math.PI));
-            stadium[roomNo].push(new Wall(280, 460, 360, 460));
-            stadium[roomNo].push(new WallArc(400, 460, 40, Math.PI, 3/2*Math.PI));
-            stadium[roomNo].push(new Wall(400, 420, 500, 420));
-            stadium[roomNo].push(new WallArc(500, 460, 40, 3/2*Math.PI, 2*Math.PI));
-            stadium[roomNo].push(new Wall(540, 460, 640, 460));
+            stadium[room].push(new Wall(0, 460, 100, 460));
+            stadium[room].push(new WallArc(140, 460, 40, Math.PI, 3/2*Math.PI));
+            stadium[room].push(new Wall(140, 420, 240, 420));
+            stadium[room].push(new WallArc(240, 460, 40, 3/2*Math.PI, 2*Math.PI));
+            stadium[room].push(new Wall(280, 460, 360, 460));
+            stadium[room].push(new WallArc(400, 460, 40, Math.PI, 3/2*Math.PI));
+            stadium[room].push(new Wall(400, 420, 500, 420));
+            stadium[room].push(new WallArc(500, 460, 40, 3/2*Math.PI, 2*Math.PI));
+            stadium[room].push(new Wall(540, 460, 640, 460));
 
             // left wall
-            stadium[roomNo].push(new WallArc(0, 270, 70, 3/2*Math.PI, 5/2*Math.PI));
+            stadium[room].push(new WallArc(0, 270, 70, 3/2*Math.PI, 5/2*Math.PI));
 
             // right wall
-            stadium[roomNo].push(new WallArc(640, 270, 70, Math.PI/2, 3/2*Math.PI));
+            stadium[room].push(new WallArc(640, 270, 70, Math.PI/2, 3/2*Math.PI));
 
             // goals borders
-            stadium[roomNo].push(new Wall(0, 80, 0, 200));
-            stadium[roomNo].push(new Wall(0, 460, 0, 340));
-            stadium[roomNo].push(new Wall(640, 80, 640, 200));
-            stadium[roomNo].push(new Wall(640, 460, 640, 340));
+            stadium[room].push(new Wall(0, 80, 0, 200));
+            stadium[room].push(new Wall(0, 460, 0, 340));
+            stadium[room].push(new Wall(640, 80, 640, 200));
+            stadium[room].push(new Wall(640, 460, 640, 340));
             break;
 
         default:
             // Top / bottom walls
-            stadium[roomNo].push(new Wall(60, 80, 580, 80));
-            stadium[roomNo].push(new Wall(60, 460, 580, 460));
+            stadium[room].push(new Wall(60, 80, 580, 80));
+            stadium[room].push(new Wall(60, 460, 580, 460));
 
-            stadium[roomNo].push(new Wall(60, 80, 60, 180));
-            stadium[roomNo].push(new Wall(60, 460, 60, 360));
-            stadium[roomNo].push(new Wall(580, 80, 580, 180));
-            stadium[roomNo].push(new Wall(580, 460, 580, 360));
+            stadium[room].push(new Wall(60, 80, 60, 180));
+            stadium[room].push(new Wall(60, 460, 60, 360));
+            stadium[room].push(new Wall(580, 80, 580, 180));
+            stadium[room].push(new Wall(580, 460, 580, 360));
 
-            stadium[roomNo].push(new Wall(50, 360, 10, 360));
-            stadium[roomNo].push(new Wall(10, 180, 50, 180));
-            stadium[roomNo].push(new Wall(590, 360, 630, 360));
-            stadium[roomNo].push(new Wall(630, 180, 590, 180));
+            stadium[room].push(new Wall(50, 360, 10, 360));
+            stadium[room].push(new Wall(10, 180, 50, 180));
+            stadium[room].push(new Wall(590, 360, 630, 360));
+            stadium[room].push(new Wall(630, 180, 590, 180));
 
             // goals borders
-            stadium[roomNo].push(new Wall(0, 360, 0, 180));
-            stadium[roomNo].push(new Wall(640, 360, 640, 180));
+            stadium[room].push(new Wall(0, 360, 0, 180));
+            stadium[room].push(new Wall(640, 360, 640, 180));
             break;
     }
 
+    sendStadium(room);
+}
+
+function sendStadium(room)
+{
+    if (!stadium.hasOwnProperty(room))
+        return;
+
     // compute positions and emit to clients
     let stadiumParams = [];
-    for (const wall of stadium[roomNo])
+    for (const wall of stadium[room])
     {
         const wallType = (wall instanceof Wall) ? WALL_TYPES.WALL : WALL_TYPES.WALL_ARC;
         switch(wallType)
@@ -1392,8 +1535,7 @@ function newRandomStadium(roomNo)
         }
     }
 
-    io.emit('newStadium', {walls : stadiumParams});
-    //console.log(stadiumParams);  
+    io.to(room).emit('newStadium', {walls : stadiumParams});
 }
 
 function playersReadyInRoom(room)
@@ -1401,14 +1543,14 @@ function playersReadyInRoom(room)
     let pno = 0;
     for (let id in serverBalls)
     {
-        if(serverBalls[id].layer === room && serverBalls[id].name){
+        if(serverBalls[id].layer == room && serverBalls[id].name){
             pno++;
         }
     }
 
     // send game parameters
-    io.emit('setNbPointsMatch', NB_POINTS_MATCH);
-    io.emit('setBallRadius', BALL_RADIUS);
+    io.to(room).emit('setNbPointsMatch', NB_POINTS_MATCH);
+    io.to(room).emit('setBallRadius', BALL_RADIUS);
 
     return pno;
 }
