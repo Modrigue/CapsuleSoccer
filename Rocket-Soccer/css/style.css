@@ -53,6 +53,18 @@ button:active
     top:1px;
 }
 
+button:disabled,
+button[disabled]
+{
+    background:linear-gradient(to bottom, #aaaaaa 5%, #cccccc 100%);
+    background-color:#aaaaaa;
+    border: 1px solid #020202;
+    background-color: #cccccc;
+    color: #666666;
+    text-shadow:0px 1px 0px #666666;
+}
+
+
 #howto
 {
     border: 1px solid black;
@@ -63,6 +75,12 @@ button:active
 }
 
 #userName
+{
+    border-radius: 10px;
+    height: 150%;
+}
+
+#userRoom
 {
     border-radius: 10px;
     height: 150%;
@@ -83,4 +101,9 @@ button:active
 #playerWelcome
 {
     font-weight: bold;
+}
+
+#userRoom
+{
+    width: 40px;
 }
