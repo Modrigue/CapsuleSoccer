@@ -231,12 +231,14 @@ socket.on('updateScore', scoreParams => {
 
 function buildStadiumMarks()
 {
-    new LineMark(60, 180, 60, 360, COLOR_MARK);
     new LineMark(320, 81, 320, 459, COLOR_MARK);
-    new LineMark(580, 180, 580, 360, COLOR_MARK);
     new CircleMark(320, 270, 60, COLOR_MARK);
-    new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
-    new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+
+    //new LineMark(60, 180, 60, 360, COLOR_MARK);
+    //new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+
+    //new LineMark(580, 180, 580, 360, COLOR_MARK);
+    //new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
 }
 
 requestAnimationFrame(renderOnly);
