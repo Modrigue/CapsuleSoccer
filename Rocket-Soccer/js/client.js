@@ -47,8 +47,11 @@ socket.on('setNbPointsMatch', nbPoints => {
     NB_POINTS_MATCH = nbPoints;
 });
 
-socket.on('newConnection', nbPlayersReady => {
-    nbPlayersReadyInRoom = nbPlayersReady;
+socket.on('newConnection', matchParams => {
+    nbPlayersReadyInRoom = matchParams.nbPlayersReady;
+    NB_PLAYERS_IN_GAME = matchParams.nbPlayersInGame;
+    NB_POINTS_MATCH = matchParams.nbPointsMatch;
+
     document.getElementById('playerWelcome').innerText =
     `Hi, enter your name and start to play`;
 

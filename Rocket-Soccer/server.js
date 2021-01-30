@@ -994,7 +994,8 @@ function connected(socket)
 {
     const room = 1;
     const nbPlayersReady = getNbPlayersReadyInRoom(room)   
-    io.emit('newConnection', nbPlayersReady);
+    io.emit('newConnection', {nbPlayersReady: nbPlayersReady,
+        nbPlayersInGame : NB_PLAYERS_IN_GAME, nbPointsMatch: NB_POINTS_MATCH});
 
     // disconnection
     socket.on('disconnect', function(){
