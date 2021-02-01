@@ -766,8 +766,12 @@ function renderOnly() {
     renderLoop();
     requestAnimationFrame(renderOnly);
 }
+// WIP: not functionnal for now
+// node exports
 try {
     module.exports = {
+        Vector,
+        setBallVerticesAlongAxis: setBallVerticesAlongAxis,
         sat: sat
     };
 }

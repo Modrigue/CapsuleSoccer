@@ -836,7 +836,7 @@ function sat(o1: Shape, o2: Shape): CollSat
 
 //Helping functions for the SAT below
 //returns the min and max projection values of a shape onto an axis
-function projShapeOntoAxis(axis: Vector, obj: Shape)
+function projShapeOntoAxis(axis: Vector, obj: Shape):  {min: number, max: number, collVertex: Vector}
 {
     setBallVerticesAlongAxis(obj, axis);
     let min = Vector.dot(axis, obj.vertex[0]);
@@ -1038,9 +1038,14 @@ function renderOnly(): void
     requestAnimationFrame(renderOnly);
 }
 
+
+// WIP: not functionnal for now
+// node exports
 try
 {
     module.exports = {
+        Vector,
+        setBallVerticesAlongAxis: setBallVerticesAlongAxis,
         sat: sat
     };
 }
