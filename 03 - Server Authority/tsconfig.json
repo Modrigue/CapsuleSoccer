@@ -13,7 +13,8 @@
     },
     "exclude": ["node-modules"],
     "include": [
-        "ts/*"
+        "ts/*",
+        "ts/mocorgo/*"
     ],
 }
 

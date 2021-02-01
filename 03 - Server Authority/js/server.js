@@ -1,5 +1,5 @@
 "use strict";
-const MC = require('../js/mocorgo');
+//const MC = require('../js/mocorgo');
 const BODIES_S = new Array();
 const COLLISIONS_S = new Array();
 ;

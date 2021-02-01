@@ -1,4 +1,4 @@
-const MC = require('../js/mocorgo');
+//const MC = require('../js/mocorgo');
 
 const BODIES_S: Array<Body_S> = new Array<Body_S>();
 const COLLISIONS_S: Array<CollData_S> = new Array<CollData_S>();;
