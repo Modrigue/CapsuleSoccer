@@ -1,95 +1,115 @@
 "use strict";
-const BODIES_S = new Array();
-const COLLISIONS_S = new Array();
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+exports.__esModule = true;
+var BODIES_S = new Array();
+var COLLISIONS_S = new Array();
 ;
-class Vector_S {
-    constructor(x, y) {
+var Vector_S = /** @class */ (function () {
+    function Vector_S(x, y) {
         this.x = x;
         this.y = y;
     }
-    set(x, y) {
+    Vector_S.prototype.set = function (x, y) {
         this.x = x;
         this.y = y;
-    }
-    add(v) {
+    };
+    Vector_S.prototype.add = function (v) {
         return new Vector_S(this.x + v.x, this.y + v.y);
-    }
-    subtr(v) {
+    };
+    Vector_S.prototype.subtr = function (v) {
         return new Vector_S(this.x - v.x, this.y - v.y);
-    }
-    mag() {
+    };
+    Vector_S.prototype.mag = function () {
         return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
-    }
-    mult(n) {
+    };
+    Vector_S.prototype.mult = function (n) {
         return new Vector_S(this.x * n, this.y * n);
-    }
-    normal() {
+    };
+    Vector_S.prototype.normal = function () {
         return new Vector_S(-this.y, this.x).unit();
-    }
-    unit() {
+    };
+    Vector_S.prototype.unit = function () {
         if (this.mag() === 0) {
             return new Vector_S(0, 0);
         }
         else {
             return new Vector_S(this.x / this.mag(), this.y / this.mag());
         }
-    }
-    drawVec(start_x, start_y, n, color) {
+    };
+    Vector_S.prototype.drawVec = function (start_x, start_y, n, color) {
         ctx.beginPath();
         ctx.moveTo(start_x, start_y);
         ctx.lineTo(start_x + this.x * n, start_y + this.y * n);
         ctx.strokeStyle = color;
         ctx.stroke();
         ctx.closePath();
-    }
-    static dot(v1, v2) {
+    };
+    Vector_S.dot = function (v1, v2) {
         return v1.x * v2.x + v1.y * v2.y;
-    }
-    static cross(v1, v2) {
+    };
+    Vector_S.cross = function (v1, v2) {
         return v1.x * v2.y - v1.y * v2.x;
-    }
-}
-class Matrix_S {
-    constructor(rows, cols) {
+    };
+    return Vector_S;
+}());
+var Matrix_S = /** @class */ (function () {
+    function Matrix_S(rows, cols) {
         this.rows = rows;
         this.cols = cols;
         this.data = [];
-        for (let i = 0; i < this.rows; i++) {
+        for (var i = 0; i < this.rows; i++) {
             this.data[i] = [];
-            for (let j = 0; j < this.cols; j++) {
+            for (var j = 0; j < this.cols; j++) {
                 this.data[i][j] = 0;
             }
         }
     }
-    multiplyVec(vec) {
-        let result = new Vector_S(0, 0);
+    Matrix_S.prototype.multiplyVec = function (vec) {
+        var result = new Vector_S(0, 0);
         result.x = this.data[0][0] * vec.x + this.data[0][1] * vec.y;
         result.y = this.data[1][0] * vec.x + this.data[1][1] * vec.y;
         return result;
-    }
-    rotMx22(angle) {
+    };
+    Matrix_S.prototype.rotMx22 = function (angle) {
         this.data[0][0] = Math.cos(angle);
         this.data[0][1] = -Math.sin(angle);
         this.data[1][0] = Math.sin(angle);
         this.data[1][1] = Math.cos(angle);
-    }
-}
+    };
+    return Matrix_S;
+}());
 // classes storing the primitive shapes: Line, Circle, Rectangle, Triangle
-class Shape_S {
-    constructor() { }
-    ; // dummy
-}
-class Line_S extends Shape_S {
-    constructor(x0, y0, x1, y1) {
-        super();
-        this.vertex = new Array();
-        this.vertex[0] = new Vector_S(x0, y0);
-        this.vertex[1] = new Vector_S(x1, y1);
-        this.dir = this.vertex[1].subtr(this.vertex[0]).unit();
-        this.mag = this.vertex[1].subtr(this.vertex[0]).mag();
-        this.pos = new Vector_S((this.vertex[0].x + this.vertex[1].x) / 2, (this.vertex[0].y + this.vertex[1].y) / 2);
+var Shape_S = /** @class */ (function () {
+    function Shape_S() {
     }
-    draw(color) {
+    ; // dummy
+    return Shape_S;
+}());
+var Line_S = /** @class */ (function (_super) {
+    __extends(Line_S, _super);
+    function Line_S(x0, y0, x1, y1) {
+        var _this = _super.call(this) || this;
+        _this.vertex = new Array();
+        _this.vertex[0] = new Vector_S(x0, y0);
+        _this.vertex[1] = new Vector_S(x1, y1);
+        _this.dir = _this.vertex[1].subtr(_this.vertex[0]).unit();
+        _this.mag = _this.vertex[1].subtr(_this.vertex[0]).mag();
+        _this.pos = new Vector_S((_this.vertex[0].x + _this.vertex[1].x) / 2, (_this.vertex[0].y + _this.vertex[1].y) / 2);
+        return _this;
+    }
+    Line_S.prototype.draw = function (color) {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
@@ -103,16 +123,19 @@ class Line_S extends Shape_S {
         }
         ctx.strokeStyle = "";
         ctx.closePath();
+    };
+    return Line_S;
+}(Shape_S));
+var Circle_S = /** @class */ (function (_super) {
+    __extends(Circle_S, _super);
+    function Circle_S(x, y, r) {
+        var _this = _super.call(this) || this;
+        _this.vertex = new Array();
+        _this.pos = new Vector_S(x, y);
+        _this.r = r;
+        return _this;
     }
-}
-class Circle_S extends Shape_S {
-    constructor(x, y, r) {
-        super();
-        this.vertex = new Array();
-        this.pos = new Vector_S(x, y);
-        this.r = r;
-    }
-    draw(color) {
+    Circle_S.prototype.draw = function (color) {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.r, 0, 2 * Math.PI);
         if (color === "") {
@@ -125,25 +148,28 @@ class Circle_S extends Shape_S {
         }
         ctx.fillStyle = "";
         ctx.closePath();
+    };
+    return Circle_S;
+}(Shape_S));
+var Rectangle_S = /** @class */ (function (_super) {
+    __extends(Rectangle_S, _super);
+    function Rectangle_S(x1, y1, x2, y2, w) {
+        var _this = _super.call(this) || this;
+        _this.vertex = new Array();
+        _this.vertex[0] = new Vector_S(x1, y1);
+        _this.vertex[1] = new Vector_S(x2, y2);
+        _this.dir = _this.vertex[1].subtr(_this.vertex[0]).unit();
+        _this.refDir = _this.vertex[1].subtr(_this.vertex[0]).unit();
+        _this.length = _this.vertex[1].subtr(_this.vertex[0]).mag();
+        _this.width = w;
+        _this.vertex[2] = _this.vertex[1].add(_this.dir.normal().mult(_this.width));
+        _this.vertex[3] = _this.vertex[2].add(_this.dir.normal().mult(-_this.length));
+        _this.pos = _this.vertex[0].add(_this.dir.mult(_this.length / 2)).add(_this.dir.normal().mult(_this.width / 2));
+        _this.angle = 0;
+        _this.rotMat = new Matrix_S(2, 2);
+        return _this;
     }
-}
-class Rectangle_S extends Shape_S {
-    constructor(x1, y1, x2, y2, w) {
-        super();
-        this.vertex = new Array();
-        this.vertex[0] = new Vector_S(x1, y1);
-        this.vertex[1] = new Vector_S(x2, y2);
-        this.dir = this.vertex[1].subtr(this.vertex[0]).unit();
-        this.refDir = this.vertex[1].subtr(this.vertex[0]).unit();
-        this.length = this.vertex[1].subtr(this.vertex[0]).mag();
-        this.width = w;
-        this.vertex[2] = this.vertex[1].add(this.dir.normal().mult(this.width));
-        this.vertex[3] = this.vertex[2].add(this.dir.normal().mult(-this.length));
-        this.pos = this.vertex[0].add(this.dir.mult(this.length / 2)).add(this.dir.normal().mult(this.width / 2));
-        this.angle = 0;
-        this.rotMat = new Matrix_S(2, 2);
-    }
-    draw(color) {
+    Rectangle_S.prototype.draw = function (color) {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
@@ -160,34 +186,37 @@ class Rectangle_S extends Shape_S {
         }
         ctx.fillStyle = "";
         ctx.closePath();
-    }
-    getVertices(angle) {
+    };
+    Rectangle_S.prototype.getVertices = function (angle) {
         this.rotMat.rotMx22(angle);
         this.dir = this.rotMat.multiplyVec(this.refDir);
         this.vertex[0] = this.pos.add(this.dir.mult(-this.length / 2)).add(this.dir.normal().mult(this.width / 2));
         this.vertex[1] = this.pos.add(this.dir.mult(-this.length / 2)).add(this.dir.normal().mult(-this.width / 2));
         this.vertex[2] = this.pos.add(this.dir.mult(this.length / 2)).add(this.dir.normal().mult(-this.width / 2));
         this.vertex[3] = this.pos.add(this.dir.mult(this.length / 2)).add(this.dir.normal().mult(this.width / 2));
+    };
+    return Rectangle_S;
+}(Shape_S));
+var Triangle_S = /** @class */ (function (_super) {
+    __extends(Triangle_S, _super);
+    function Triangle_S(x1, y1, x2, y2, x3, y3) {
+        var _this = _super.call(this) || this;
+        _this.vertex = new Array();
+        _this.vertex[0] = new Vector_S(x1, y1);
+        _this.vertex[1] = new Vector_S(x2, y2);
+        _this.vertex[2] = new Vector_S(x3, y3);
+        _this.pos = new Vector_S((_this.vertex[0].x + _this.vertex[1].x + _this.vertex[2].x) / 3, (_this.vertex[0].y + _this.vertex[1].y + _this.vertex[2].y) / 3);
+        _this.dir = _this.vertex[0].subtr(_this.pos).unit();
+        _this.refDir = _this.dir;
+        _this.refDiam = new Array();
+        _this.refDiam[0] = _this.vertex[0].subtr(_this.pos);
+        _this.refDiam[1] = _this.vertex[1].subtr(_this.pos);
+        _this.refDiam[2] = _this.vertex[2].subtr(_this.pos);
+        _this.angle = 0;
+        _this.rotMat = new Matrix_S(2, 2);
+        return _this;
     }
-}
-class Triangle_S extends Shape_S {
-    constructor(x1, y1, x2, y2, x3, y3) {
-        super();
-        this.vertex = new Array();
-        this.vertex[0] = new Vector_S(x1, y1);
-        this.vertex[1] = new Vector_S(x2, y2);
-        this.vertex[2] = new Vector_S(x3, y3);
-        this.pos = new Vector_S((this.vertex[0].x + this.vertex[1].x + this.vertex[2].x) / 3, (this.vertex[0].y + this.vertex[1].y + this.vertex[2].y) / 3);
-        this.dir = this.vertex[0].subtr(this.pos).unit();
-        this.refDir = this.dir;
-        this.refDiam = new Array();
-        this.refDiam[0] = this.vertex[0].subtr(this.pos);
-        this.refDiam[1] = this.vertex[1].subtr(this.pos);
-        this.refDiam[2] = this.vertex[2].subtr(this.pos);
-        this.angle = 0;
-        this.rotMat = new Matrix_S(2, 2);
-    }
-    draw(color) {
+    Triangle_S.prototype.draw = function (color) {
         ctx.beginPath();
         ctx.moveTo(this.vertex[0].x, this.vertex[0].y);
         ctx.lineTo(this.vertex[1].x, this.vertex[1].y);
@@ -203,18 +232,19 @@ class Triangle_S extends Shape_S {
         }
         ctx.fillStyle = "";
         ctx.closePath();
-    }
-    getVertices(angle) {
+    };
+    Triangle_S.prototype.getVertices = function (angle) {
         this.rotMat.rotMx22(angle);
         this.dir = this.rotMat.multiplyVec(this.refDir);
         this.vertex[0] = this.pos.add(this.rotMat.multiplyVec(this.refDiam[0]));
         this.vertex[1] = this.pos.add(this.rotMat.multiplyVec(this.refDiam[1]));
         this.vertex[2] = this.pos.add(this.rotMat.multiplyVec(this.refDiam[2]));
-    }
-}
+    };
+    return Triangle_S;
+}(Shape_S));
 //Parent class of the bodies (Ball, Capsule, Box, Star, Wall)
-class Body_S {
-    constructor(x, y) {
+var Body_S = /** @class */ (function () {
+    function Body_S(x, y) {
         this.comp = new Array();
         this.pos = new Vector_S(x, y);
         this.m = 0;
@@ -241,12 +271,12 @@ class Body_S {
         this.player = false;
         BODIES_S.push(this);
     }
-    render() {
-        for (let i in this.comp) {
+    Body_S.prototype.render = function () {
+        for (var i in this.comp) {
             this.comp[i].draw(this.color);
         }
-    }
-    reposition() {
+    };
+    Body_S.prototype.reposition = function () {
         this.acc = this.acc.unit().mult(this.keyForce);
         this.vel = this.vel.add(this.acc);
         this.vel = this.vel.mult(1 - this.friction);
@@ -255,36 +285,40 @@ class Body_S {
         }
         //this.angVel *= (1-this.angFriction);
         this.angVel = this.angVel * (1 - this.angFriction);
-    }
-    keyControl() { }
-    remove() {
+    };
+    Body_S.prototype.keyControl = function () { };
+    Body_S.prototype.remove = function () {
         if (BODIES_S.indexOf(this) !== -1) {
             BODIES_S.splice(BODIES_S.indexOf(this), 1);
         }
-    }
-}
-class Ball_S extends Body_S {
-    constructor(x, y, r, m) {
-        super(x, y);
-        this.pos = new Vector_S(x, y);
-        this.comp = [new Circle_S(x, y, r)];
-        this.m = m;
-        if (this.m === 0) {
-            this.inv_m = 0;
+    };
+    return Body_S;
+}());
+var Ball_S = /** @class */ (function (_super) {
+    __extends(Ball_S, _super);
+    function Ball_S(x, y, r, m) {
+        var _this = _super.call(this, x, y) || this;
+        _this.pos = new Vector_S(x, y);
+        _this.comp = [new Circle_S(x, y, r)];
+        _this.m = m;
+        if (_this.m === 0) {
+            _this.inv_m = 0;
         }
         else {
-            this.inv_m = 1 / this.m;
+            _this.inv_m = 1 / _this.m;
         }
+        return _this;
     }
-    setPosition(x, y, a = this.angle) {
+    Ball_S.prototype.setPosition = function (x, y, a) {
+        if (a === void 0) { a = this.angle; }
         this.pos.set(x, y);
         this.comp[0].pos = this.pos;
-    }
-    reposition() {
-        super.reposition();
+    };
+    Ball_S.prototype.reposition = function () {
+        _super.prototype.reposition.call(this);
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
-    }
-    keyControl() {
+    };
+    Ball_S.prototype.keyControl = function () {
         if (this.left) {
             this.acc.x = -this.keyForce;
         }
@@ -303,32 +337,35 @@ class Ball_S extends Body_S {
         if (!this.up && !this.down) {
             this.acc.y = 0;
         }
-    }
-}
-class Capsule_S extends Body_S {
-    constructor(x1, y1, x2, y2, r, m) {
-        super(x1, y1);
-        this.comp = [new Circle_S(x1, y1, r), new Circle_S(x2, y2, r)];
-        let recV1 = this.comp[1].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        let recV2 = this.comp[0].pos.add(this.comp[1].pos.subtr(this.comp[0].pos).unit().normal().mult(r));
-        this.comp.unshift(new Rectangle_S(recV1.x, recV1.y, recV2.x, recV2.y, 2 * r));
-        this.pos = this.comp[0].pos;
-        this.m = m;
-        if (this.m === 0) {
-            this.inv_m = 0;
+    };
+    return Ball_S;
+}(Body_S));
+var Capsule_S = /** @class */ (function (_super) {
+    __extends(Capsule_S, _super);
+    function Capsule_S(x1, y1, x2, y2, r, m) {
+        var _this = _super.call(this, x1, y1) || this;
+        _this.comp = [new Circle_S(x1, y1, r), new Circle_S(x2, y2, r)];
+        var recV1 = _this.comp[1].pos.add(_this.comp[1].pos.subtr(_this.comp[0].pos).unit().normal().mult(r));
+        var recV2 = _this.comp[0].pos.add(_this.comp[1].pos.subtr(_this.comp[0].pos).unit().normal().mult(r));
+        _this.comp.unshift(new Rectangle_S(recV1.x, recV1.y, recV2.x, recV2.y, 2 * r));
+        _this.pos = _this.comp[0].pos;
+        _this.m = m;
+        if (_this.m === 0) {
+            _this.inv_m = 0;
         }
         else {
-            this.inv_m = 1 / this.m;
+            _this.inv_m = 1 / _this.m;
         }
-        this.inertia = this.m * (Math.pow((2 * this.comp[0].width), 2) + Math.pow((this.comp[0].length + 2 * this.comp[0].width), 2)) / 12;
-        if (this.m === 0) {
-            this.inv_inertia = 0;
+        _this.inertia = _this.m * (Math.pow((2 * _this.comp[0].width), 2) + Math.pow((_this.comp[0].length + 2 * _this.comp[0].width), 2)) / 12;
+        if (_this.m === 0) {
+            _this.inv_inertia = 0;
         }
         else {
-            this.inv_inertia = 1 / this.inertia;
+            _this.inv_inertia = 1 / _this.inertia;
         }
+        return _this;
     }
-    keyControl() {
+    Capsule_S.prototype.keyControl = function () {
         if (this.up) {
             this.acc = this.comp[0].dir.mult(-this.keyForce);
         }
@@ -344,8 +381,9 @@ class Capsule_S extends Body_S {
         if (!this.up && !this.down) {
             this.acc.set(0, 0);
         }
-    }
-    setPosition(x, y, a = this.angle) {
+    };
+    Capsule_S.prototype.setPosition = function (x, y, a) {
+        if (a === void 0) { a = this.angle; }
         this.pos.set(x, y);
         this.angle = a;
         this.comp[0].pos = this.pos;
@@ -353,33 +391,36 @@ class Capsule_S extends Body_S {
         this.comp[1].pos = this.comp[0].pos.add(this.comp[0].dir.mult(-this.comp[0].length / 2));
         this.comp[2].pos = this.comp[0].pos.add(this.comp[0].dir.mult(this.comp[0].length / 2));
         this.angle += this.angVel;
-    }
-    reposition() {
-        super.reposition();
+    };
+    Capsule_S.prototype.reposition = function () {
+        _super.prototype.reposition.call(this);
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
-    }
-}
-class Box_S extends Body_S {
-    constructor(x1, y1, x2, y2, w, m) {
-        super(x1, y1);
-        this.comp = [new Rectangle_S(x1, y1, x2, y2, w)];
-        this.pos = this.comp[0].pos;
-        this.m = m;
-        if (this.m === 0) {
-            this.inv_m = 0;
+    };
+    return Capsule_S;
+}(Body_S));
+var Box_S = /** @class */ (function (_super) {
+    __extends(Box_S, _super);
+    function Box_S(x1, y1, x2, y2, w, m) {
+        var _this = _super.call(this, x1, y1) || this;
+        _this.comp = [new Rectangle_S(x1, y1, x2, y2, w)];
+        _this.pos = _this.comp[0].pos;
+        _this.m = m;
+        if (_this.m === 0) {
+            _this.inv_m = 0;
         }
         else {
-            this.inv_m = 1 / this.m;
+            _this.inv_m = 1 / _this.m;
         }
-        this.inertia = this.m * (Math.pow(this.comp[0].width, 2) + Math.pow(this.comp[0].length, 2)) / 12;
-        if (this.m === 0) {
-            this.inv_inertia = 0;
+        _this.inertia = _this.m * (Math.pow(_this.comp[0].width, 2) + Math.pow(_this.comp[0].length, 2)) / 12;
+        if (_this.m === 0) {
+            _this.inv_inertia = 0;
         }
         else {
-            this.inv_inertia = 1 / this.inertia;
+            _this.inv_inertia = 1 / _this.inertia;
         }
+        return _this;
     }
-    keyControl() {
+    Box_S.prototype.keyControl = function () {
         if (this.up) {
             this.acc = this.comp[0].dir.mult(-this.keyForce);
             ;
@@ -397,51 +438,55 @@ class Box_S extends Body_S {
         if (!this.up && !this.down) {
             this.acc.set(0, 0);
         }
-    }
-    setPosition(x, y, a = this.angle) {
+    };
+    Box_S.prototype.setPosition = function (x, y, a) {
+        if (a === void 0) { a = this.angle; }
         this.pos.set(x, y);
         this.angle = a;
         this.comp[0].pos = this.pos;
         this.comp[0].getVertices(this.angle + this.angVel);
         this.angle += this.angVel;
-    }
-    reposition() {
-        super.reposition();
+    };
+    Box_S.prototype.reposition = function () {
+        _super.prototype.reposition.call(this);
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
-    }
-}
-class Star_S extends Body_S {
-    constructor(x1, y1, r, m) {
-        super(x1, y1);
-        this.comp = [];
-        this.r = r;
-        let center = new Vector_S(x1, y1);
-        let upDir = new Vector_S(0, -1);
-        let p1 = center.add(upDir.mult(r));
-        let p2 = center.add(upDir.mult(-r / 2)).add(upDir.normal().mult(-r * Math.sqrt(3) / 2));
-        let p3 = center.add(upDir.mult(-r / 2)).add(upDir.normal().mult(r * Math.sqrt(3) / 2));
-        this.comp.push(new Triangle_S(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y));
+    };
+    return Box_S;
+}(Body_S));
+var Star_S = /** @class */ (function (_super) {
+    __extends(Star_S, _super);
+    function Star_S(x1, y1, r, m) {
+        var _this = _super.call(this, x1, y1) || this;
+        _this.comp = [];
+        _this.r = r;
+        var center = new Vector_S(x1, y1);
+        var upDir = new Vector_S(0, -1);
+        var p1 = center.add(upDir.mult(r));
+        var p2 = center.add(upDir.mult(-r / 2)).add(upDir.normal().mult(-r * Math.sqrt(3) / 2));
+        var p3 = center.add(upDir.mult(-r / 2)).add(upDir.normal().mult(r * Math.sqrt(3) / 2));
+        _this.comp.push(new Triangle_S(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y));
         p1 = center.add(upDir.mult(-r));
         p2 = center.add(upDir.mult(r / 2)).add(upDir.normal().mult(-r * Math.sqrt(3) / 2));
         p3 = center.add(upDir.mult(r / 2)).add(upDir.normal().mult(r * Math.sqrt(3) / 2));
-        this.comp.push(new Triangle_S(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y));
-        this.pos = this.comp[0].pos;
-        this.m = m;
-        if (this.m === 0) {
-            this.inv_m = 0;
+        _this.comp.push(new Triangle_S(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y));
+        _this.pos = _this.comp[0].pos;
+        _this.m = m;
+        if (_this.m === 0) {
+            _this.inv_m = 0;
         }
         else {
-            this.inv_m = 1 / this.m;
+            _this.inv_m = 1 / _this.m;
         }
-        this.inertia = this.m * (Math.pow((2 * this.r), 2)) / 12;
-        if (this.m === 0) {
-            this.inv_inertia = 0;
+        _this.inertia = _this.m * (Math.pow((2 * _this.r), 2)) / 12;
+        if (_this.m === 0) {
+            _this.inv_inertia = 0;
         }
         else {
-            this.inv_inertia = 1 / this.inertia;
+            _this.inv_inertia = 1 / _this.inertia;
         }
+        return _this;
     }
-    keyControl() {
+    Star_S.prototype.keyControl = function () {
         if (this.up) {
             this.acc = this.comp[0].dir.mult(-this.keyForce);
         }
@@ -457,8 +502,9 @@ class Star_S extends Body_S {
         if (!this.up && !this.down) {
             this.acc.set(0, 0);
         }
-    }
-    setPosition(x, y, a = this.angle) {
+    };
+    Star_S.prototype.setPosition = function (x, y, a) {
+        if (a === void 0) { a = this.angle; }
         this.pos.set(x, y);
         this.angle = a;
         this.comp[0].pos = this.pos;
@@ -466,72 +512,79 @@ class Star_S extends Body_S {
         this.comp[0].getVertices(this.angle + this.angVel);
         this.comp[1].getVertices(this.angle + this.angVel);
         this.angle += this.angVel;
-    }
-    reposition() {
-        super.reposition();
+    };
+    Star_S.prototype.reposition = function () {
+        _super.prototype.reposition.call(this);
         this.setPosition(this.pos.add(this.vel).x, this.pos.add(this.vel).y);
+    };
+    return Star_S;
+}(Body_S));
+var Wall_S = /** @class */ (function (_super) {
+    __extends(Wall_S, _super);
+    function Wall_S(x1, y1, x2, y2) {
+        var _this = _super.call(this, (x1 + x2) / 2, (y1 + y2) / 2) || this;
+        _this.comp = [new Line_S(x1, y1, x2, y2)];
+        _this.pos = new Vector_S((x1 + x2) / 2, (y1 + y2) / 2);
+        return _this;
     }
-}
-class Wall_S extends Body_S {
-    constructor(x1, y1, x2, y2) {
-        super((x1 + x2) / 2, (y1 + y2) / 2);
-        this.comp = [new Line_S(x1, y1, x2, y2)];
-        this.pos = new Vector_S((x1 + x2) / 2, (y1 + y2) / 2);
-    }
-}
+    return Wall_S;
+}(Body_S));
 //Collision manifold, consisting the data for collision handling
 //Manifolds are collected in an array for every frame
-class CollData_S {
-    constructor(o1, o2, normal, pen, cp) {
+var CollData_S = /** @class */ (function () {
+    function CollData_S(o1, o2, normal, pen, cp) {
         this.o1 = o1;
         this.o2 = o2;
         this.normal = normal;
         this.pen = pen;
         this.cp = cp;
     }
-    penRes() {
+    CollData_S.prototype.penRes = function () {
         if (this.o1.inv_m + this.o2.inv_m == 0)
             return;
-        let penResolution = this.normal.mult(this.pen / (this.o1.inv_m + this.o2.inv_m));
+        var penResolution = this.normal.mult(this.pen / (this.o1.inv_m + this.o2.inv_m));
         this.o1.pos = this.o1.pos.add(penResolution.mult(this.o1.inv_m));
         this.o2.pos = this.o2.pos.add(penResolution.mult(-this.o2.inv_m));
-    }
-    collRes() {
+    };
+    CollData_S.prototype.collRes = function () {
         //1. Closing velocity
-        let collArm1 = this.cp.subtr(this.o1.comp[0].pos);
-        let rotVel1 = new Vector_S(-this.o1.angVel * collArm1.y, this.o1.angVel * collArm1.x);
-        let closVel1 = this.o1.vel.add(rotVel1);
-        let collArm2 = this.cp.subtr(this.o2.comp[0].pos);
-        let rotVel2 = new Vector_S(-this.o2.angVel * collArm2.y, this.o2.angVel * collArm2.x);
-        let closVel2 = this.o2.vel.add(rotVel2);
+        var collArm1 = this.cp.subtr(this.o1.comp[0].pos);
+        var rotVel1 = new Vector_S(-this.o1.angVel * collArm1.y, this.o1.angVel * collArm1.x);
+        var closVel1 = this.o1.vel.add(rotVel1);
+        var collArm2 = this.cp.subtr(this.o2.comp[0].pos);
+        var rotVel2 = new Vector_S(-this.o2.angVel * collArm2.y, this.o2.angVel * collArm2.x);
+        var closVel2 = this.o2.vel.add(rotVel2);
         //2. Impulse augmentation
-        let impAug1 = Vector_S.cross(collArm1, this.normal);
+        var impAug1 = Vector_S.cross(collArm1, this.normal);
         impAug1 = impAug1 * this.o1.inv_inertia * impAug1;
-        let impAug2 = Vector_S.cross(collArm2, this.normal);
+        var impAug2 = Vector_S.cross(collArm2, this.normal);
         impAug2 = impAug2 * this.o2.inv_inertia * impAug2;
-        let relVel = closVel1.subtr(closVel2);
-        let sepVel = Vector_S.dot(relVel, this.normal);
-        let new_sepVel = -sepVel * Math.min(this.o1.elasticity, this.o2.elasticity);
-        let vsep_diff = new_sepVel - sepVel;
-        let impulseDenom = this.o1.inv_m + this.o2.inv_m + impAug1 + impAug2;
-        let impulse = (impulseDenom > 0) ?
+        var relVel = closVel1.subtr(closVel2);
+        var sepVel = Vector_S.dot(relVel, this.normal);
+        var new_sepVel = -sepVel * Math.min(this.o1.elasticity, this.o2.elasticity);
+        var vsep_diff = new_sepVel - sepVel;
+        var impulseDenom = this.o1.inv_m + this.o2.inv_m + impAug1 + impAug2;
+        var impulse = (impulseDenom > 0) ?
             vsep_diff / (this.o1.inv_m + this.o2.inv_m + impAug1 + impAug2) : 0;
-        let impulseVec = this.normal.mult(impulse);
+        var impulseVec = this.normal.mult(impulse);
         //3. Changing the velocities
         this.o1.vel = this.o1.vel.add(impulseVec.mult(this.o1.inv_m));
         this.o2.vel = this.o2.vel.add(impulseVec.mult(-this.o2.inv_m));
         this.o1.angVel += this.o1.inv_inertia * Vector_S.cross(collArm1, impulseVec);
         this.o2.angVel -= this.o2.inv_inertia * Vector_S.cross(collArm2, impulseVec);
-    }
-}
-class CollSat_S {
-    constructor(pen, axis, vertex, overlaps = true) {
+    };
+    return CollData_S;
+}());
+var CollSat_S = /** @class */ (function () {
+    function CollSat_S(pen, axis, vertex, overlaps) {
+        if (overlaps === void 0) { overlaps = true; }
         this.pen = pen;
         this.axis = axis;
         this.vertex = vertex;
         this.overlaps = overlaps;
     }
-}
+    return CollSat_S;
+}());
 // function closestPointOnLS(p: Vector, w1)
 // {
 //     let ballToWallStart = w1.start.subtr(p);
@@ -551,24 +604,24 @@ class CollSat_S {
 //Separating axis theorem on two objects
 //Returns with the details of the Minimum Translation Vector (or false if no collision)
 function sat_S(o1, o2) {
-    let minOverlap = -Number.MAX_SAFE_INTEGER;
-    let smallestAxis = new Vector_S(0, 0); // dummy
-    let vertexObj = new Line_S(0, 0, 1, 1); // dummy
-    let axes = findAxes_S(o1, o2);
-    let proj1;
-    let proj2;
-    let firstShapeAxes = getShapeAxes_S(o1);
-    for (let i = 0; i < axes.length; i++) {
+    var minOverlap = -Number.MAX_SAFE_INTEGER;
+    var smallestAxis = new Vector_S(0, 0); // dummy
+    var vertexObj = new Line_S(0, 0, 1, 1); // dummy
+    var axes = findAxes_S(o1, o2);
+    var proj1;
+    var proj2;
+    var firstShapeAxes = getShapeAxes_S(o1);
+    for (var i = 0; i < axes.length; i++) {
         proj1 = projShapeOntoAxis_S(axes[i], o1);
         proj2 = projShapeOntoAxis_S(axes[i], o2);
-        let overlap = Math.min(proj1.max, proj2.max) - Math.max(proj1.min, proj2.min);
+        var overlap = Math.min(proj1.max, proj2.max) - Math.max(proj1.min, proj2.min);
         if (overlap < 0) {
             return new CollSat_S(-Number.MAX_SAFE_INTEGER, new Vector_S(0, 0), new Vector_S(0, 0), false);
         }
         if ((proj1.max > proj2.max && proj1.min < proj2.min) ||
             (proj1.max < proj2.max && proj1.min > proj2.min)) {
-            let mins = Math.abs(proj1.min - proj2.min);
-            let maxs = Math.abs(proj1.max - proj2.max);
+            var mins = Math.abs(proj1.min - proj2.min);
+            var maxs = Math.abs(proj1.max - proj2.max);
             if (mins < maxs) {
                 overlap += mins;
             }
@@ -595,7 +648,7 @@ function sat_S(o1, o2) {
         }
     }
     ;
-    let contactVertex = projShapeOntoAxis_S(smallestAxis, vertexObj).collVertex;
+    var contactVertex = projShapeOntoAxis_S(smallestAxis, vertexObj).collVertex;
     //smallestAxis.drawVec(contactVertex.x, contactVertex.y, minOverlap, "blue");
     if (vertexObj === o2) {
         smallestAxis = smallestAxis.mult(-1);
@@ -606,11 +659,11 @@ function sat_S(o1, o2) {
 //returns the min and max projection values of a shape onto an axis
 function projShapeOntoAxis_S(axis, obj) {
     setBallVerticesAlongAxis_S(obj, axis);
-    let min = Vector_S.dot(axis, obj.vertex[0]);
-    let max = min;
-    let collVertex = obj.vertex[0];
-    for (let i = 0; i < obj.vertex.length; i++) {
-        let p = Vector_S.dot(axis, obj.vertex[i]);
+    var min = Vector_S.dot(axis, obj.vertex[0]);
+    var max = min;
+    var collVertex = obj.vertex[0];
+    for (var i = 0; i < obj.vertex.length; i++) {
+        var p = Vector_S.dot(axis, obj.vertex[i]);
         if (p < min) {
             min = p;
             collVertex = obj.vertex[i];
@@ -627,7 +680,7 @@ function projShapeOntoAxis_S(axis, obj) {
 }
 //finds the projection axes for the two objects
 function findAxes_S(o1, o2) {
-    let axes = new Array();
+    var axes = new Array();
     if (o1 instanceof Circle_S && o2 instanceof Circle_S) {
         if (o2.pos.subtr(o1.pos).mag() > 0) {
             axes.push(o2.pos.subtr(o1.pos).unit());
@@ -671,9 +724,9 @@ function findAxes_S(o1, o2) {
 }
 //iterates through an objects vertices and returns the one that is the closest to the given point
 function closestVertexToPoint_S(obj, p) {
-    let closestVertex = new Vector_S(0, 0);
-    let minDist = -1;
-    for (let i = 0; i < obj.vertex.length; i++) {
+    var closestVertex = new Vector_S(0, 0);
+    var minDist = -1;
+    for (var i = 0; i < obj.vertex.length; i++) {
         if (p.subtr(obj.vertex[i]).mag() < minDist || minDist == -1) {
             closestVertex = obj.vertex[i];
             minDist = p.subtr(obj.vertex[i]).mag();
@@ -704,16 +757,16 @@ function setBallVerticesAlongAxis_S(obj, axis) {
 //Thats it for the SAT and its support functions
 //Prevents objects to float away from the canvas
 function putWallsAround_S(x1, y1, x2, y2) {
-    let edge1 = new Wall_S(x1, y1, x2, y1);
-    let edge2 = new Wall_S(x2, y1, x2, y2);
-    let edge3 = new Wall_S(x2, y2, x1, y2);
-    let edge4 = new Wall_S(x1, y2, x1, y1);
+    var edge1 = new Wall_S(x1, y1, x2, y1);
+    var edge2 = new Wall_S(x2, y1, x2, y2);
+    var edge3 = new Wall_S(x2, y2, x1, y2);
+    var edge4 = new Wall_S(x1, y2, x1, y1);
 }
 function collide_S(o1, o2) {
     //let bestSat = { pen: null, axis: null, vertex: null }
-    let bestSat = new CollSat_S(-Number.MAX_SAFE_INTEGER, new Vector_S(0, 0), new Vector_S(0, 0), false);
-    for (let o1comp = 0; o1comp < o1.comp.length; o1comp++) {
-        for (let o2comp = 0; o2comp < o2.comp.length; o2comp++) {
+    var bestSat = new CollSat_S(-Number.MAX_SAFE_INTEGER, new Vector_S(0, 0), new Vector_S(0, 0), false);
+    for (var o1comp = 0; o1comp < o1.comp.length; o1comp++) {
+        for (var o2comp = 0; o2comp < o2.comp.length; o2comp++) {
             if ((sat_S(o1.comp[o1comp], o2.comp[o2comp]).pen > bestSat.pen) || bestSat.pen == -Number.MAX_SAFE_INTEGER) {
                 bestSat = sat_S(o1.comp[o1comp], o2.comp[o2comp]);
             }
@@ -722,35 +775,35 @@ function collide_S(o1, o2) {
     return bestSat;
 }
 function userInteraction_S() {
-    BODIES_S.forEach((b) => {
+    BODIES_S.forEach(function (b) {
         b.keyControl();
     });
 }
 function physicsLoop_S( /*timestamp*/) {
     COLLISIONS_S.length = 0;
-    BODIES_S.forEach((b) => {
+    BODIES_S.forEach(function (b) {
         b.reposition();
     });
-    BODIES_S.forEach((b, index) => {
-        for (let bodyPair = index + 1; bodyPair < BODIES_S.length; bodyPair++) {
-            const bodyRef = BODIES_S[index];
-            const bodyProbe = BODIES_S[bodyPair];
+    BODIES_S.forEach(function (b, index) {
+        for (var bodyPair = index + 1; bodyPair < BODIES_S.length; bodyPair++) {
+            var bodyRef = BODIES_S[index];
+            var bodyProbe = BODIES_S[bodyPair];
             if (bodyRef.layer === bodyProbe.layer ||
                 bodyRef.layer === 0 || bodyProbe.layer === 0) {
-                let bestSat = collide_S(bodyRef, bodyProbe);
+                var bestSat = collide_S(bodyRef, bodyProbe);
                 if (bestSat.overlaps)
                     COLLISIONS_S.push(new CollData_S(bodyRef, bodyProbe, bestSat.axis, bestSat.pen, bestSat.vertex));
             }
         }
     });
-    COLLISIONS_S.forEach((c) => {
+    COLLISIONS_S.forEach(function (c) {
         c.penRes();
         c.collRes();
     });
 }
 function renderLoop_S() {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    BODIES.forEach((b) => {
+    BODIES.forEach(function (b) {
         b.render();
     });
 }
@@ -766,101 +819,103 @@ function renderOnly_S() {
     requestAnimationFrame(renderOnly_S);
 }
 //************************* END OF PHYSICS ENGINE ***/
-const DEPLOY = true;
-const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
-const express = require('express');
-const app = express();
-let io;
+var DEPLOY = true;
+var PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
+var express = require('express');
+var app = express();
+var io;
 //import * as MC from "./mocorgo.js";
 //app.get('/', (req: any, res: any) => res.send('Hello World!'))*/
 if (DEPLOY) {
     app.use(express.static('.'));
-    const http = require('http').Server(app);
+    var http = require('http').Server(app);
     io = require('socket.io')(http);
-    app.get('/', (req, res) => res.sendFile(__dirname + '../index.html'));
+    app.get('/', function (req, res) { return res.sendFile(__dirname + '../index.html'); });
     http.listen(PORT, function () {
-        console.log(`listening on port ${PORT}...`);
+        console.log("listening on port " + PORT + "...");
     });
 }
 else {
     io = require('socket.io')(PORT);
-    app.get('/', (req, res) => res.send('Hello World!'));
+    app.get('/', function (req, res) { return res.send('Hello World!'); });
 }
 buildStadium_S();
-class Player_S extends Capsule_S {
-    constructor() {
-        super(...arguments);
-        this.score = 0;
-        this.no = 0;
+var Player_S = /** @class */ (function (_super) {
+    __extends(Player_S, _super);
+    function Player_S() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.score = 0;
+        _this.no = 0;
+        return _this;
     }
-}
-let serverBalls = new Map();
-let football_S = new Map();
-let footballPos;
-let playerReg = new Map();
-let clientNo = 0;
-let roomNo;
+    return Player_S;
+}(Capsule_S));
+var serverBalls = new Map();
+var football_S = new Map();
+var footballPos;
+var playerReg = new Map();
+var clientNo = 0;
+var roomNo;
 io.on('connection', connected);
 setInterval(serverLoop, 1000 / 60);
 function connected(socket) {
     clientNo++;
-    roomNo = Math.round(clientNo / 2);
+    roomNo = Math.ceil(clientNo / 2);
     socket.join(roomNo);
-    console.log(`New client no.: ${clientNo}, room no.: ${roomNo}`);
+    console.log("New client no.: " + clientNo + ", room no.: " + roomNo);
     if (clientNo % 2 === 1) {
         //creating player 1
-        let newPlayer = new Player_S(80, 270, 150, 270, 25, 10);
+        var newPlayer = new Player_S(80, 270, 150, 270, 25, 10);
         newPlayer.maxSpeed = 4;
         newPlayer.no = 1;
         newPlayer.layer = roomNo;
         serverBalls.set(socket.id, newPlayer);
-        playerReg.set(socket.id, { x: 115, y: 270, no: 1, angle: 0, roomNo: roomNo, id: socket.id });
+        playerReg.set(socket.id, { x: 115, y: 270, no: 1, angle: 0, roomNo: roomNo });
     }
     else if (clientNo % 2 === 0) {
         //creating player 2
-        let newPlayer = new Player_S(560, 270, 490, 270, 25, 10);
+        var newPlayer = new Player_S(560, 270, 490, 270, 25, 10);
         newPlayer.maxSpeed = 4;
         newPlayer.no = 2;
         newPlayer.layer = roomNo;
         serverBalls.set(socket.id, newPlayer);
-        playerReg.set(socket.id, { x: 525, y: 270, no: 2, angle: 0, roomNo: roomNo, id: socket.id });
+        playerReg.set(socket.id, { x: 525, y: 270, no: 2, angle: 0, roomNo: roomNo });
         // create football
-        let newBall = new Ball_S(320, 270, 20, 6);
+        var newBall = new Ball_S(320, 270, 20, 6);
         newBall.layer = roomNo;
         football_S.set(roomNo, newBall);
         io.emit('updateFootball', { x: newBall.pos.x, y: newBall.pos.y });
     }
-    for (let [id, player] of serverBalls) {
+    for (var _i = 0, serverBalls_1 = serverBalls; _i < serverBalls_1.length; _i++) {
+        var _a = serverBalls_1[_i], id = _a[0], player = _a[1];
         io.to(player.layer).emit('updateConnections', playerReg.get(id));
     }
     socket.on('disconnect', function () {
-        const room = serverBalls.get(socket.id).layer;
+        var room = serverBalls.get(socket.id).layer;
         if (football_S.has(room)) {
             football_S.get(room).remove();
-            football_S.delete(room);
+            football_S["delete"](room);
         }
         if (serverBalls.has(socket.id)) {
             serverBalls.get(socket.id).remove();
             io.to(room).emit('deletePlayer', playerReg.get(socket.id));
-            serverBalls.delete(socket.id);
+            serverBalls["delete"](socket.id);
         }
         if (playerReg.has(socket.id))
-            playerReg.delete(socket.id);
+            playerReg["delete"](socket.id);
         console.log(playerReg);
-        console.log(`Number of players: ${playerReg.size}`);
-        console.log(`Number of balls: ${football_S.size}`);
-        console.log(`Number of BODIES: ${BODIES_S.length - 12}`);
-        console.log(`Joined players ever: ${clientNo}`);
+        console.log("Number of players: " + playerReg.size);
+        console.log("Number of balls: " + football_S.size);
+        console.log("Number of BODIES: " + (BODIES.length - 12));
+        console.log("Joined players ever: " + clientNo);
         io.emit('updateConnections', playerReg);
-        for (let [id, playerRegData] of playerReg)
-            io.emit('updateConnections', playerRegData);
     });
     console.log(playerReg);
-    console.log(`Number of players: ${playerReg.size}`);
-    console.log(`Number of balls: ${football_S.size}`);
-    console.log(`Number of BODIES: ${BODIES_S.length - 12}`);
-    console.log(`Joined players ever: ${clientNo}`);
-    socket.on('userCommands', (data) => {
+    console.log("Number of players: " + playerReg.size);
+    console.log("Number of balls: " + football_S.size);
+    console.log("Number of BODIES: " + (BODIES.length - 12));
+    console.log("Joined players ever: " + clientNo);
+    socket.on('userCommands', function (data) {
         serverBalls.get(socket.id).left = data.left;
         serverBalls.get(socket.id).up = data.up;
         serverBalls.get(socket.id).right = data.right;
@@ -869,9 +924,10 @@ function connected(socket) {
     });
 }
 function serverLoop() {
-    userInteraction_S();
-    physicsLoop_S();
-    for (let [id, player] of serverBalls) {
+    userInteraction();
+    physicsLoop();
+    for (var _i = 0, serverBalls_2 = serverBalls; _i < serverBalls_2.length; _i++) {
+        var _a = serverBalls_2[_i], id = _a[0], player = _a[1];
         io.to(player.layer).emit('positionUpdate', {
             id: id,
             x: player.pos.x,
@@ -879,12 +935,12 @@ function serverLoop() {
             angle: player.angle
         });
     }
-    for (let room = 1; room <= roomNo; room++) {
+    for (var room = 1; room <= roomNo; room++) {
         if (!football_S.has(room)) {
             //console.log("waiting for 2 players...");
         }
         else {
-            let footballCur = football_S.get(room);
+            var footballCur = football_S.get(room);
             gameLogic_S(room);
             io.to(room).emit('updateFootball', {
                 x: footballCur.pos.x,
@@ -894,27 +950,32 @@ function serverLoop() {
     }
 }
 function gameLogic_S(room) {
-    let footballCur = football_S.get(room);
+    var footballCur = football_S.get(room);
     if (footballCur.pos.x < 45 || footballCur.pos.x > 595)
         scoring(room);
-    for (let [id, player] of serverBalls)
+    for (var _i = 0, serverBalls_3 = serverBalls; _i < serverBalls_3.length; _i++) {
+        var _a = serverBalls_3[_i], id = _a[0], player = _a[1];
         if (player.score === 3 && player.layer === room)
             gameOver(room);
+    }
 }
 function gameOver(room) {
     gameSetup(room);
     io.to(room).emit('updateScore', null);
-    setTimeout(() => {
-        for (let [id, player] of serverBalls)
+    setTimeout(function () {
+        for (var _i = 0, serverBalls_4 = serverBalls; _i < serverBalls_4.length; _i++) {
+            var _a = serverBalls_4[_i], id = _a[0], player = _a[1];
             if (player.layer === room)
                 player.score = 0;
+        }
     }, 2000);
 }
 function scoring(room) {
-    let scorerId = "";
-    let footballCur = football_S.get(room);
+    var scorerId = "";
+    var footballCur = football_S.get(room);
     if (footballCur.pos.x < 45) {
-        for (let [id, player] of serverBalls) {
+        for (var _i = 0, serverBalls_5 = serverBalls; _i < serverBalls_5.length; _i++) {
+            var _a = serverBalls_5[_i], id = _a[0], player = _a[1];
             if (player.no === 2 && player.layer === room) {
                 player.score++;
                 scorerId = id;
@@ -923,7 +984,8 @@ function scoring(room) {
         }
     }
     if (footballCur.pos.x > 595) {
-        for (let [id, player] of serverBalls) {
+        for (var _b = 0, serverBalls_6 = serverBalls; _b < serverBalls_6.length; _b++) {
+            var _c = serverBalls_6[_b], id = _c[0], player = _c[1];
             if (player.no === 1 && player.layer === room) {
                 player.score++;
                 scorerId = id;
@@ -935,7 +997,8 @@ function scoring(room) {
     io.to(room).emit('updateScore', scorerId);
 }
 function gameSetup(room) {
-    for (let [id, player] of serverBalls) {
+    for (var _i = 0, serverBalls_7 = serverBalls; _i < serverBalls_7.length; _i++) {
+        var _a = serverBalls_7[_i], id = _a[0], player = _a[1];
         if (player.no === 1 && player.layer === room) {
             player.vel.set(0, 0);
             player.angVel = 0;
@@ -947,7 +1010,7 @@ function gameSetup(room) {
             player.setPosition(525, 270, 0);
         }
     }
-    let footballCur = football_S.get(room);
+    var footballCur = football_S.get(room);
     footballCur.pos.set(320, 270);
     footballCur.vel.set(0, 0);
 }
@@ -965,4 +1028,3 @@ function buildStadium_S() {
     new Wall_S(640, 360, 640, 180);
     new Wall_S(630, 180, 590, 180);
 }
-//# sourceMappingURL=server.js.map
