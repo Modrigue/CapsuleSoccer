@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently -k -n \"TS,Node\" -p \"[{name}]\" -c \"blue,green\" \"tsc -w\" \"nodemon js\\server.js\"",
-    "start": "node server.js"
+    "start": "node js\\server.js"
   },
   "author": "",
   "license": "ISC",
