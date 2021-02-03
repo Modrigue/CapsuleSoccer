@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "outDir": "js",
+        "target": "ES6",
+        "module": "commonjs",       /* supports modules */
+        "esModuleInterop": true,    /* former exports retrocompatibilty */
+        "noEmitOnError": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": false,
+        "sourceMap": true,          /* for ts debug */
+        "pretty": true
+    },
+    "exclude": ["node-modules"],
+    "include": [
+        "ts/*",
+        "ts/mocorgo/*"
+    ],
+}
+
+/* npm run dev */

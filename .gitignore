@@ -9,3 +9,11 @@
 /Rocket-Soccer/node_modules
 
 .vscode/
+/RoomSwitch/js_backup
+/CapsuleSoccerOffline/js_backup
+/01 - Server-Client Communication/js_backup
+/02 - Connecting and Disconnecting/js_backup
+/03 - Server Authority/js_backup
+/04 - Game for Two/js_backup
+/05 - Adding socket.io Rooms/js_backup
+/06 - Getting User Friendly/js_backup
