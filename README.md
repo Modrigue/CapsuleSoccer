@@ -4,6 +4,7 @@
 Usage:
 ```
 $ cd Rocket-Soccer
-$ node server.js
+$ npm install
+$ npm start
 ```
 
