@@ -966,7 +966,7 @@ if (DEPLOY)
     http = require('http').Server(app);
     io = require('socket.io')(http);
     
-    app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
+    app.get('/', (req, res) => res.sendFile(__dirname + '../index.html'));
     
     http.listen(PORT, function(){
         console.log(`listening on port ${PORT}...`);
