@@ -73,8 +73,11 @@ socket.on('updatePlayersReady', (nbPlayersReady: number) => {
 
 function updateWelcomeGUI()
 {
+    const teamNo = (nbPlayersReadyInRoom % 2) + 1;
+    const teamColor = (teamNo == 1) ? "Red" : "Green";
+
     (<HTMLParagraphElement>document.getElementById('playerGameInfo')).innerText =
-    `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Match in ${NB_POINTS_MATCH_CLIENT} points`;
+    `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Team ${teamColor} - Match in ${NB_POINTS_MATCH_CLIENT} points`;
 
     const hasMaxNbPlayers = (nbPlayersReadyInRoom >= NB_PLAYERS_IN_GAME_CLIENT);
     (<HTMLButtonElement>document.getElementById('buttonSubmit')).disabled = hasMaxNbPlayers;
