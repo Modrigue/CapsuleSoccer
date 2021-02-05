@@ -3,6 +3,8 @@ const DEPLOY_CLIENT: boolean = true;
 let NB_PLAYERS_IN_GAME_CLIENT = 2;
 let NB_POINTS_MATCH_CLIENT = 10;
 
+let STADIUM_W_CLIENT = 640;
+
 const PAD_LENGTH_CLIENT = 50;
 const BALL_CAPSULE_LENGTH_CLIENT = 60;
 
@@ -43,7 +45,6 @@ let stadium: Array<Body> = new Array<Body>();
 let obstacles: Array<Body> = new Array<Body>();
 let room = -1;
 let nbPlayersReadyInRoom = 0;
-buildStadiumMarks();
 
 socket.on('connect', () => {
     selfID = socket.id;
@@ -57,6 +58,12 @@ socket.on('newConnection', (matchParams: any) => {
     nbPlayersReadyInRoom = matchParams.nbPlayersReady;
     NB_PLAYERS_IN_GAME_CLIENT = matchParams.nbPlayersInGame;
     NB_POINTS_MATCH_CLIENT = matchParams.nbPointsMatch;
+
+    STADIUM_W_CLIENT = matchParams.stadiumW;
+
+    canvas.width = STADIUM_W_CLIENT;
+
+    buildStadiumMarks();
 
     (<HTMLParagraphElement>document.getElementById('playerWelcome')).innerText =
     `Hi, enter your name and start to play`;
@@ -253,8 +260,8 @@ socket.on('updateScore', (scoreParams: any) => {
 
 function buildStadiumMarks()
 {
-    new LineMark(320, 81, 320, 459, COLOR_MARK);
-    new CircleMark(320, 270, 60, COLOR_MARK);
+    new LineMark(STADIUM_W_CLIENT/2, 81, STADIUM_W_CLIENT/2, 459, COLOR_MARK);
+    new CircleMark(STADIUM_W_CLIENT/2, 270, 60, COLOR_MARK);
 
     //new LineMark(60, 180, 60, 360, COLOR_MARK);
     //new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
@@ -271,11 +278,11 @@ function userInterface()
     ctx.font = "italic 28px Arial";
     ctx.textAlign = "center";
     ctx.fillStyle = "dodgerblue";
-    ctx.fillText("Rocket Soccer", 320, 30);
+    ctx.fillText("Rocket Soccer", STADIUM_W_CLIENT/2, 30);
 
     // disabled: display room
     //ctx.font = "italic 20px Arial";
-    //ctx.fillText(`Room ${room}`, 320, 60);
+    //ctx.fillText(`Room ${room}`, STADIUM_W_CLIENT/2, 60);
 
     for(let [id, player] of clientBalls)
     {
@@ -292,7 +299,7 @@ function userInterface()
         {
             ctx.font = fontSizeScore;
             ctx.fillStyle = (player.no % 2 == 0) ? "green" : "red";
-            const xPos = (player.no % 2 == 0) ? 630 : 10;
+            const xPos = (player.no % 2 == 0) ? STADIUM_W_CLIENT - 10 : 10;
             const yPos = 40;
             ctx.fillText(player.score.toString(), xPos, yPos);
         }
@@ -301,7 +308,7 @@ function userInterface()
         if(player.name)
             ctx.font = fontSizeName;
         ctx.fillStyle = getPlayerColor(player.no);
-        const xPos = (player.no % 2 == 0) ? 580 : 60;
+        const xPos = (player.no % 2 == 0) ? STADIUM_W_CLIENT - 60 : 60;
         const yPos = 25 + 25 * Math.floor((player.no - 1) / 2);
         const nameText = (player.name) ? player.name : ""
         ctx.fillText(nameText, xPos, yPos);
@@ -315,22 +322,22 @@ function createFootball(footballParams: any): (Ball | Capsule)
     switch(ballType)
     {
         case BALL_TYPE.BALL:
-            ball = new Ball(320, 270, footballParams.r, footballParams.m);
+            ball = new Ball(STADIUM_W_CLIENT/2, 270, footballParams.r, footballParams.m);
             ball.color = "blue";
             ball.setImages([BALL_IMG]);
-            ball.pos.set(320, 270);
+            ball.pos.set(STADIUM_W_CLIENT/2, 270);
             ball.vel.set(0, 0);
             return ball;
         
         case BALL_TYPE.CAPSULE:
             ball = new Capsule(
-                320 - BALL_CAPSULE_LENGTH_CLIENT/2, 270,
-                320 + BALL_CAPSULE_LENGTH_CLIENT/2, 270,
+                STADIUM_W_CLIENT/2 - BALL_CAPSULE_LENGTH_CLIENT/2, 270,
+                STADIUM_W_CLIENT/2 + BALL_CAPSULE_LENGTH_CLIENT/2, 270,
                 footballParams.r, footballParams.r, footballParams.m
             );
             ball.color = "blue";
             ball.setImages(BALL_CAPSULE_IMGS);
-            ball.pos.set(320, 270);
+            ball.pos.set(STADIUM_W_CLIENT/2, 270);
             ball.vel.set(0, 0);
             return ball;
     }
