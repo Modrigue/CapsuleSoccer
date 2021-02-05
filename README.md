@@ -3,7 +3,10 @@
 
 Usage:
 ```
+$ npm install typescript
+
 $ cd Rocket-Soccer
-$ node server.js
+$ npm install
+$ tsc ; npm start
 ```
 

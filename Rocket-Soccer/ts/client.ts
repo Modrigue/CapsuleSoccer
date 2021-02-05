@@ -1,236 +1,316 @@
-"use strict";
-const DEPLOY_CLIENT = true;
+const DEPLOY_CLIENT: boolean = true;
+
 let NB_PLAYERS_IN_GAME_CLIENT = 2;
 let NB_POINTS_MATCH_CLIENT = 10;
+
 const PAD_LENGTH_CLIENT = 50;
 const BALL_CAPSULE_LENGTH_CLIENT = 60;
+
 const BALL_IMG = "./img/blue-ball-128.png";
 const BALL_CAPSULE_IMGS = ["./img/blue-pill-body-128.png", "./img/blue-pill-right-128.png", "./img/blue-pill-left-128.png"];
 const OBSTACLE_IMG = "./img/flocon-64.png";
+
 const COLORS_PLAYERS = ["Salmon", "LightGreen", "LightSalmon", "MediumSeaGreen", "Red", "Green"];
 const COLOR_WALL = "DodgerBlue";
 const COLOR_MARK = "MediumBlue";
-let socket;
+
+
+let socket: any;
 if (DEPLOY_CLIENT)
     socket = io.connect();
 else
     socket = io.connect(`http://localhost:${PORT}`);
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const form = document.getElementById('userForm');
-const gameAreaDiv = document.getElementById('gameArea');
-class Player extends Capsule {
-    constructor() {
-        super(...arguments);
-        this.score = 0;
-        this.no = 0;
-        this.name = "";
-    }
+
+const canvas: HTMLCanvasElement = <HTMLCanvasElement>document.getElementById('canvas');
+const ctx: CanvasRenderingContext2D = <CanvasRenderingContext2D>canvas.getContext('2d');
+
+const form: HTMLDivElement = <HTMLDivElement>document.getElementById('userForm');
+const gameAreaDiv: HTMLDivElement = <HTMLDivElement>document.getElementById('gameArea');
+
+class Player extends Capsule
+{
+    score: number = 0;
+    no: number = 0;
+    name: string = "";
 }
+
 // init game field
-let football;
-let footballInitialized = false;
-let clientBalls = new Map();
-let selfID;
-let stadium = new Array();
-let obstacles = new Array();
+let football: (Ball | Capsule);
+let footballInitialized: boolean = false;
+let clientBalls: Map<string, Player> = new Map<string, Player>();
+let selfID: string;
+let stadium: Array<Body> = new Array<Body>();
+let obstacles: Array<Body> = new Array<Body>();
 let room = -1;
 let nbPlayersReadyInRoom = 0;
 buildStadiumMarks();
+
 socket.on('connect', () => {
     selfID = socket.id;
 });
-socket.on('setNbPointsMatch', (nbPoints) => {
+
+socket.on('setNbPointsMatch', (nbPoints: number) => {
     NB_POINTS_MATCH_CLIENT = nbPoints;
 });
-socket.on('newConnection', (matchParams) => {
+
+socket.on('newConnection', (matchParams: any) => {
     nbPlayersReadyInRoom = matchParams.nbPlayersReady;
     NB_PLAYERS_IN_GAME_CLIENT = matchParams.nbPlayersInGame;
     NB_POINTS_MATCH_CLIENT = matchParams.nbPointsMatch;
-    document.getElementById('playerWelcome').innerText =
-        `Hi, enter your name and start to play`;
+
+    (<HTMLParagraphElement>document.getElementById('playerWelcome')).innerText =
+    `Hi, enter your name and start to play`;
+
     updateWelcomeGUI();
-    document.getElementById('userName').focus();
+    (<HTMLInputElement>document.getElementById('userName')).focus();
 });
-socket.on('updatePlayersReady', (nbPlayersReady) => {
+
+socket.on('updatePlayersReady', (nbPlayersReady: number) => {
+
     nbPlayersReadyInRoom = nbPlayersReady;
     updateWelcomeGUI();
 });
-function updateWelcomeGUI() {
-    document.getElementById('playerGameInfo').innerText =
-        `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Match in ${NB_POINTS_MATCH_CLIENT} points`;
+
+function updateWelcomeGUI()
+{
+    (<HTMLParagraphElement>document.getElementById('playerGameInfo')).innerText =
+    `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Match in ${NB_POINTS_MATCH_CLIENT} points`;
+
     const hasMaxNbPlayers = (nbPlayersReadyInRoom >= NB_PLAYERS_IN_GAME_CLIENT);
-    document.getElementById('buttonSubmit').disabled = hasMaxNbPlayers;
+    (<HTMLButtonElement>document.getElementById('buttonSubmit')).disabled = hasMaxNbPlayers;
 }
-socket.on('updateConnections', (player) => {
+
+socket.on('updateConnections', (player: any) => {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-    if (!clientBalls.has(player.id)) {
-        let newPlayer = new Player(player.x + PAD_LENGTH_CLIENT / 2, player.y, player.x - PAD_LENGTH_CLIENT / 2, player.y, 25, 0, 10);
+
+    if(!clientBalls.has(player.id))
+    {
+        let newPlayer: Player = new Player(player.x + PAD_LENGTH_CLIENT/2, player.y, player.x - PAD_LENGTH_CLIENT/2, player.y, 25, 0, 10);
         newPlayer.maxSpeed = 4;
         newPlayer.score = 0;
         newPlayer.no = player.no;
         newPlayer.angle = Math.PI; // corrects render while waiting
         newPlayer.color = getPlayerColor(player.no);
-        if (player.id !== undefined) {
+
+        if (player.id !== undefined)
+        {
             const side = (newPlayer.no % 2 == 0) ? "right" : "left";
             const color = newPlayer.color.toLowerCase();
-            newPlayer.setImages([`img/missile-${side}-${color}-body-128.png`,
-                `img/missile-${side}-${color}-head-128.png`]);
+            newPlayer.setImages(
+                [`img/missile-${side}-${color}-body-128.png`,
+                `img/missile-${side}-${color}-head-128.png`]
+            );
             newPlayer.setActionImage(`img/missile-${side}-fire-128.png`);
         }
-        if (player.id === selfID)
+
+        if(player.id === selfID)
             userInput(newPlayer);
+
         clientBalls.set(player.id, newPlayer);
     }
-});
-socket.on('deletePlayer', (player) => {
-    if (clientBalls.has(player.id)) {
-        clientBalls.get(player.id).remove();
+})
+
+socket.on('deletePlayer', (player: any) => {
+    if(clientBalls.has(player.id))
+    {
+        (<Player>clientBalls.get(player.id)).remove();
         clientBalls.delete(player.id);
     }
-});
-socket.on('playerName', (data) => {
+})
+
+socket.on('playerName', (data: any) => {
     if (clientBalls.has(data.id))
-        clientBalls.get(data.id).name = data.name;
-});
-socket.on('newFootball', (footballParams) => {
-    if (football !== undefined)
+        (<Player>clientBalls.get(data.id)).name = data.name;
+})
+
+socket.on('newFootball', (footballParams: any) => {
+    if(football !== undefined)
         football.remove();
+
     football = createFootball(footballParams);
     //footballInitialized = true;
-});
-socket.on('newObstacles', (obstacleParams) => {
-    if (obstacles !== undefined)
+})
+
+socket.on('newObstacles', (obstacleParams: any) => {
+    if(obstacles !== undefined)
         for (let obstacle of obstacles)
             obstacle.remove();
+
     const r = obstacleParams.r;
-    for (let pos of obstacleParams.positions) {
+    for (let pos of obstacleParams.positions)
+    {
         const obstacle = new Star6(pos.x, pos.y, r, 0, COLOR_WALL);
         obstacle.setImages([OBSTACLE_IMG]);
         obstacle.color = COLOR_WALL;
-        obstacles.push(obstacle);
+        obstacles.push(obstacle); 
     }
-});
-socket.on('newStadium', (stadiumParams) => {
-    if (stadium !== undefined)
+})
+
+socket.on('newStadium', (stadiumParams: any) => {
+    if(stadium !== undefined)
         for (let wall of stadium)
             wall.remove();
-    for (let typePos of stadiumParams.walls) {
+
+    for (let typePos of stadiumParams.walls)
+    {
         const wallType = typePos[0];
-        switch (wallType) {
+        switch(wallType)
+        {
             case WALL_TYPE.WALL:
                 stadium.push(new Wall(typePos[1].x, typePos[1].y, typePos[2].x, typePos[2].y, COLOR_WALL));
                 break;
+
             case WALL_TYPE.WALL_ARC:
                 stadium.push(new WallArc(typePos[1].x, typePos[1].y, typePos[2], typePos[3], typePos[4], COLOR_WALL));
                 break;
         }
     }
-});
-socket.on('updateFootball', (footballParams) => {
+})
+
+socket.on('updateFootball', (footballParams: any) => {
     //if (footballPos == null)
     //    return;
-    if (!footballInitialized) {
+
+    if(!footballInitialized)
+    {
         football = new Ball(footballParams.x, footballParams.y, footballParams.r, footballParams.m);
         football.color = "blue";
         football.setImages([BALL_IMG]);
         footballInitialized = true;
     }
-    else {
+    else
+    {
         football.setPosition(footballParams.x, footballParams.y, footballParams.angle);
     }
-});
-socket.on('updatePlayersPositions', (playerPos) => {
-    for (let [id, player] of clientBalls) {
-        if (player !== undefined && id === playerPos.id) {
+})
+
+socket.on('updatePlayersPositions', (playerPos: any) => {
+
+    for(let [id, player] of clientBalls)
+    {
+        if(player !== undefined && id === playerPos.id)
+        {
             player.setPosition(playerPos.x, playerPos.y, playerPos.angle);
             player.up = playerPos.up; // for action image display
         }
     }
-});
-socket.on('scoring', (scorerId) => {
-    if (scorerId === null) {
-        for (let [id, player] of clientBalls)
+})
+
+socket.on('scoring', (scorerId: (string | null)) => {
+    if (scorerId === null)
+    {
+        for(let [id, player] of clientBalls)
             player.score = 0;
     }
-    else {
-        document.getElementById('winning').innerHTML = ``;
-        for (let [id, player] of clientBalls) {
-            if (id === scorerId) {
+    else
+    {
+        (<HTMLElement>document.getElementById('winning')).innerHTML = ``;
+        for(let [id, player] of clientBalls)
+        {
+            if (id === scorerId)
+            {
                 player.score++;
-                if (player.score === NB_POINTS_MATCH_CLIENT) {
+
+                if(player.score === NB_POINTS_MATCH_CLIENT)
+                {
                     let winnerText = "";
                     if (NB_PLAYERS_IN_GAME_CLIENT <= 2)
                         winnerText = `The winner is ${player.name}!!! <br>LET'S PLAY AGAIN!`;
-                    else {
+                    else
+                    {
                         let winningTeam = (player.no % 2);
                         if (winningTeam == 0)
                             winningTeam = 2;
+                        
                         winnerText = `The winner is team ${winningTeam}!!! <br>LET'S PLAY AGAIN!`;
                     }
-                    document.getElementById('winning').innerHTML = winnerText;
+
+                    (<HTMLElement>document.getElementById('winning')).innerHTML = winnerText
                 }
             }
         }
     }
-});
-socket.on('updateScore', (scoreParams) => {
-    if (scoreParams === null) {
-        for (let [id, player] of clientBalls)
-            player.score = 0;
+})
+
+socket.on('updateScore', (scoreParams: any) => {
+
+    if (scoreParams === null)
+    {
+        for(let [id, player] of clientBalls)
+        player.score = 0;
     }
-    else {
+    else
+    {
         const id = scoreParams.id;
         if (clientBalls.has(id))
-            clientBalls.get(id).score = scoreParams.score;
+            (<Player>clientBalls.get(id)).score = scoreParams.score;
     }
+    
 });
-function buildStadiumMarks() {
+
+function buildStadiumMarks()
+{
     new LineMark(320, 81, 320, 459, COLOR_MARK);
     new CircleMark(320, 270, 60, COLOR_MARK);
+
     //new LineMark(60, 180, 60, 360, COLOR_MARK);
     //new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+
     //new LineMark(580, 180, 580, 360, COLOR_MARK);
     //new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
 }
+
 requestAnimationFrame(renderOnly);
-function userInterface() {
+
+function userInterface()
+{    
     // display title
     ctx.font = "italic 28px Arial";
     ctx.textAlign = "center";
     ctx.fillStyle = "dodgerblue";
     ctx.fillText("Rocket Soccer", 320, 30);
+
     // disabled: display room
     //ctx.font = "italic 20px Arial";
     //ctx.fillText(`Room ${room}`, 320, 60);
-    for (let [id, player] of clientBalls) {
+
+    for(let [id, player] of clientBalls)
+    {
         const fontSizeScore = "48px Arial";
-        const fontSizeName = (id === selfID) ? "bold 28px Arial" : "25px Arial";
+        const fontSizeName  = (id === selfID) ? "bold 28px Arial" : "25px Arial";
         //const fontSizeScore = fontSizeName;
+
         ctx.textAlign = (player.no % 2 == 0) ? "right" : "left";
+
         // display team score
         if (player.no == 1
-            || player.no == 2 * Math.floor(NB_PLAYERS_IN_GAME_CLIENT / 2)) {
+         || player.no == 2 * Math.floor(NB_PLAYERS_IN_GAME_CLIENT / 2)
+        )
+        {
             ctx.font = fontSizeScore;
             ctx.fillStyle = (player.no % 2 == 0) ? "green" : "red";
             const xPos = (player.no % 2 == 0) ? 630 : 10;
             const yPos = 40;
             ctx.fillText(player.score.toString(), xPos, yPos);
         }
+
         // display player name
-        if (player.name)
+        if(player.name)
             ctx.font = fontSizeName;
         ctx.fillStyle = getPlayerColor(player.no);
         const xPos = (player.no % 2 == 0) ? 580 : 60;
         const yPos = 25 + 25 * Math.floor((player.no - 1) / 2);
-        const nameText = (player.name) ? player.name : "";
+        const nameText = (player.name) ? player.name : ""
         ctx.fillText(nameText, xPos, yPos);
     }
 }
-function createFootball(footballParams) {
+
+function createFootball(footballParams: any): (Ball | Capsule)
+{
     let ball;
-    const ballType = footballParams.type;
-    switch (ballType) {
+    const ballType = <BALL_TYPE>footballParams.type;    
+    switch(ballType)
+    {
         case BALL_TYPE.BALL:
             ball = new Ball(320, 270, footballParams.r, footballParams.m);
             ball.color = "blue";
@@ -238,8 +318,13 @@ function createFootball(footballParams) {
             ball.pos.set(320, 270);
             ball.vel.set(0, 0);
             return ball;
+        
         case BALL_TYPE.CAPSULE:
-            ball = new Capsule(320 - BALL_CAPSULE_LENGTH_CLIENT / 2, 270, 320 + BALL_CAPSULE_LENGTH_CLIENT / 2, 270, footballParams.r, footballParams.r, footballParams.m);
+            ball = new Capsule(
+                320 - BALL_CAPSULE_LENGTH_CLIENT/2, 270,
+                320 + BALL_CAPSULE_LENGTH_CLIENT/2, 270,
+                footballParams.r, footballParams.r, footballParams.m
+            );
             ball.color = "blue";
             ball.setImages(BALL_CAPSULE_IMGS);
             ball.pos.set(320, 270);
@@ -247,31 +332,41 @@ function createFootball(footballParams) {
             return ball;
     }
 }
-function getPlayerColor(no) {
+
+function getPlayerColor(no: number)
+{
     const nbColors = COLORS_PLAYERS.length;
     let colorIndex = no % nbColors;
     if (colorIndex == 0)
-        colorIndex = nbColors;
+         colorIndex = nbColors;
+
     return COLORS_PLAYERS[colorIndex - 1];
 }
-form.onsubmit = function (e) {
+
+form.onsubmit = function(e)
+{
     e.preventDefault();
-    const name = document.getElementById('userName').value;
+
+    const name = (<HTMLInputElement>document.getElementById('userName')).value;
     const roomCandidate = 1; //document.getElementById('userRoom').value;
-    socket.emit('clientName', { name: name, room: roomCandidate }, (response) => {
-        if (response.error) {
+
+    socket.emit('clientName', {name: name, room: roomCandidate}, (response: any) => {
+        
+        if (response.error)
+        {
             alert(response.error);
             return true;
         }
-        else {
+        else
+        {
             // ok, enter room
             room = roomCandidate;
             form.style.display = 'none';
             gameAreaDiv.style.display = 'block';
             document.body.style.backgroundColor = "Black";
             canvas.focus();
+            
             return false;
         }
-    });
-};
-//# sourceMappingURL=client.js.map
+      });
+}
