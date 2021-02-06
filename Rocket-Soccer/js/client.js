@@ -84,7 +84,7 @@ socket.on('updateConnections', (player) => {
             newPlayer.setActionImage(`img/missile-${side}-fire-128.png`);
         }
         if (player.id === selfID)
-            userInput(newPlayer);
+            userInput(newPlayer, canvas);
         clientBalls.set(player.id, newPlayer);
     }
 });

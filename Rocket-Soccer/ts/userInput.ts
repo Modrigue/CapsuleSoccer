@@ -3,7 +3,7 @@
 let justPressed: boolean = false;
 
 //Event listeners for the arrow keys
-function userInput(obj: any)
+function userInput(obj: any, canvas: HTMLCanvasElement)
 {    
     canvas.addEventListener('keydown', function(e)
     {

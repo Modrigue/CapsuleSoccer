@@ -114,7 +114,7 @@ socket.on('updateConnections', (player: any) => {
         }
 
         if(player.id === selfID)
-            userInput(newPlayer);
+            userInput(newPlayer, canvas);
 
         clientBalls.set(player.id, newPlayer);
     }
