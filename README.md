@@ -7,6 +7,6 @@ $ npm install typescript
 
 $ cd Rocket-Soccer
 $ npm install
-$ tsc ; npm start
+$ npm start
 ```
 
