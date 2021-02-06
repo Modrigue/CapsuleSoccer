@@ -80,8 +80,8 @@ socket.on('updateConnections', (player) => {
         newPlayer.maxSpeed = 4;
         newPlayer.score = 0;
         newPlayer.no = player.no;
-        newPlayer.angle = Math.PI; // corrects render while waiting
         newPlayer.color = getPlayerColor(player.no);
+        // set images
         if (player.id !== undefined) {
             const side = (newPlayer.no % 2 == 0) ? "right" : "left";
             const color = newPlayer.color.toLowerCase();
@@ -89,6 +89,7 @@ socket.on('updateConnections', (player) => {
                 `img/missile-${side}-${color}-head-128.png`]);
             newPlayer.setActionImage(`img/missile-${side}-fire-128.png`);
         }
+        newPlayer.setPosition(player.x, player.y, player.angle);
         if (player.id === selfID)
             userInput(newPlayer, canvas);
         clientBalls.set(player.id, newPlayer);

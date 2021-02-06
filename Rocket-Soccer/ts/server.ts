@@ -1187,8 +1187,8 @@ class Player_S extends Capsule_S
 let serverBalls: Map<string, Player_S> = new Map<string, Player_S>();
 let football_S: Map<number, (Ball_S | Capsule_S)> = new Map<number, (Ball_S | Capsule_S)>();
 let footballPos: {x: number, y: number};
-let playerReg: Map<string, {x: number, y: number, no: number, roomNo: number, id: string}>
-    = new Map<string, {x: number, y: number, no: number, roomNo: number, id: string}>();
+let playerReg: Map<string, {x: number, y: number, no: number, roomNo: number, id: string, angle: number}>
+    = new Map<string, {x: number, y: number, no: number, roomNo: number, id: string, angle: number}>();
 
 let clientNo: number = 0;
 let gameIsOn: Map<number, boolean> = new Map<number, boolean>();
@@ -1317,7 +1317,8 @@ function connected(socket: any)
         newPlayer.name = data.name;
         serverBalls.set(socket.id, newPlayer);
         initPlayerPosition(socket.id);
-        playerReg.set(socket.id, {id: socket.id, x: newPlayer.pos.x, y: newPlayer.pos.y, roomNo: room, no: clientNoInRoom});
+        playerReg.set(socket.id, {id: socket.id, x: newPlayer.pos.x, y: newPlayer.pos.y,
+            roomNo: room, no: clientNoInRoom, angle: newPlayer.angle});
 
         // initialize game if all players present
         if (clientNoInRoom == NB_PLAYERS_IN_GAME)

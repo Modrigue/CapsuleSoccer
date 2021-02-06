@@ -968,7 +968,8 @@ function connected(socket) {
         newPlayer.name = data.name;
         serverBalls.set(socket.id, newPlayer);
         initPlayerPosition(socket.id);
-        playerReg.set(socket.id, { id: socket.id, x: newPlayer.pos.x, y: newPlayer.pos.y, roomNo: room, no: clientNoInRoom });
+        playerReg.set(socket.id, { id: socket.id, x: newPlayer.pos.x, y: newPlayer.pos.y,
+            roomNo: room, no: clientNoInRoom, angle: newPlayer.angle });
         // initialize game if all players present
         if (clientNoInRoom == NB_PLAYERS_IN_GAME) {
             // stadium
