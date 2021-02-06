@@ -2,6 +2,8 @@
 const DEPLOY_CLIENT = true;
 let NB_PLAYERS_IN_GAME_CLIENT = 2;
 let NB_POINTS_MATCH_CLIENT = 10;
+let STADIUM_W_CLIENT = 640;
+let STADIUM_H_CLIENT = 420;
 const PAD_LENGTH_CLIENT = 50;
 const BALL_CAPSULE_LENGTH_CLIENT = 60;
 const BALL_IMG = "./img/blue-ball-128.png";
@@ -30,13 +32,14 @@ class Player extends Capsule {
 // init game field
 let football;
 let footballInitialized = false;
+let marksInitialized = false;
 let clientBalls = new Map();
 let selfID;
 let stadium = new Array();
 let obstacles = new Array();
 let room = -1;
 let nbPlayersReadyInRoom = 0;
-buildStadiumMarks();
+let drawPlayerHint = true;
 socket.on('connect', () => {
     selfID = socket.id;
 });
@@ -47,6 +50,11 @@ socket.on('newConnection', (matchParams) => {
     nbPlayersReadyInRoom = matchParams.nbPlayersReady;
     NB_PLAYERS_IN_GAME_CLIENT = matchParams.nbPlayersInGame;
     NB_POINTS_MATCH_CLIENT = matchParams.nbPointsMatch;
+    STADIUM_W_CLIENT = matchParams.stadiumW;
+    STADIUM_H_CLIENT = matchParams.stadiumH;
+    canvas.width = STADIUM_W_CLIENT;
+    canvas.height = STADIUM_H_CLIENT + 60; // includes header top
+    buildStadiumMarks();
     document.getElementById('playerWelcome').innerText =
         `Hi, enter your name and start to play`;
     updateWelcomeGUI();
@@ -55,10 +63,13 @@ socket.on('newConnection', (matchParams) => {
 socket.on('updatePlayersReady', (nbPlayersReady) => {
     nbPlayersReadyInRoom = nbPlayersReady;
     updateWelcomeGUI();
+    drawPlayerHint = true;
 });
 function updateWelcomeGUI() {
+    const teamNo = (nbPlayersReadyInRoom % 2) + 1;
+    const teamColor = (teamNo == 1) ? "Red" : "Green";
     document.getElementById('playerGameInfo').innerText =
-        `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Match in ${NB_POINTS_MATCH_CLIENT} points`;
+        `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Team ${teamColor} - Match in ${NB_POINTS_MATCH_CLIENT} points`;
     const hasMaxNbPlayers = (nbPlayersReadyInRoom >= NB_PLAYERS_IN_GAME_CLIENT);
     document.getElementById('buttonSubmit').disabled = hasMaxNbPlayers;
 }
@@ -69,8 +80,8 @@ socket.on('updateConnections', (player) => {
         newPlayer.maxSpeed = 4;
         newPlayer.score = 0;
         newPlayer.no = player.no;
-        newPlayer.angle = Math.PI; // corrects render while waiting
         newPlayer.color = getPlayerColor(player.no);
+        // set images
         if (player.id !== undefined) {
             const side = (newPlayer.no % 2 == 0) ? "right" : "left";
             const color = newPlayer.color.toLowerCase();
@@ -78,8 +89,9 @@ socket.on('updateConnections', (player) => {
                 `img/missile-${side}-${color}-head-128.png`]);
             newPlayer.setActionImage(`img/missile-${side}-fire-128.png`);
         }
+        newPlayer.setPosition(player.x, player.y, player.angle);
         if (player.id === selfID)
-            userInput(newPlayer);
+            userInput(newPlayer, canvas);
         clientBalls.set(player.id, newPlayer);
     }
 });
@@ -126,6 +138,7 @@ socket.on('newStadium', (stadiumParams) => {
                 break;
         }
     }
+    drawPlayerHint = true;
 });
 socket.on('updateFootball', (footballParams) => {
     //if (footballPos == null)
@@ -186,12 +199,15 @@ socket.on('updateScore', (scoreParams) => {
     }
 });
 function buildStadiumMarks() {
-    new LineMark(320, 81, 320, 459, COLOR_MARK);
-    new CircleMark(320, 270, 60, COLOR_MARK);
-    //new LineMark(60, 180, 60, 360, COLOR_MARK);
-    //new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
-    //new LineMark(580, 180, 580, 360, COLOR_MARK);
-    //new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+    if (marksInitialized)
+        return;
+    new LineMark(STADIUM_W_CLIENT / 2, 81, STADIUM_W_CLIENT / 2, STADIUM_H_CLIENT + 60 - 21, COLOR_MARK);
+    new CircleMark(STADIUM_W_CLIENT / 2, STADIUM_H_CLIENT / 2 + 60, 60, COLOR_MARK);
+    //new LineMark(60, STADIUM_H_CLIENT/2 + 60 - 90, 60, STADIUM_H_CLIENT/2 + 60 + 90, COLOR_MARK);
+    //new ArcMark(60, STADIUM_H_CLIENT/2 + 60, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+    //new LineMark(STADIUM_W_CLIENT - 60,  STADIUM_H_CLIENT/2 + 60 - 90, STADIUM_W_CLIENT - 60,  STADIUM_H_CLIENT/2 + 60 + 90, COLOR_MARK);
+    //new ArcMark(STADIUM_W_CLIENT - 60, STADIUM_H_CLIENT/2 + 60, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+    marksInitialized = true;
 }
 requestAnimationFrame(renderOnly);
 function userInterface() {
@@ -199,10 +215,10 @@ function userInterface() {
     ctx.font = "italic 28px Arial";
     ctx.textAlign = "center";
     ctx.fillStyle = "dodgerblue";
-    ctx.fillText("Rocket Soccer", 320, 30);
+    ctx.fillText("Rocket Soccer", STADIUM_W_CLIENT / 2, 30);
     // disabled: display room
     //ctx.font = "italic 20px Arial";
-    //ctx.fillText(`Room ${room}`, 320, 60);
+    //ctx.fillText(`Room ${room}`, STADIUM_W_CLIENT/2, 60);
     for (let [id, player] of clientBalls) {
         const fontSizeScore = "48px Arial";
         const fontSizeName = (id === selfID) ? "bold 28px Arial" : "25px Arial";
@@ -213,7 +229,7 @@ function userInterface() {
             || player.no == 2 * Math.floor(NB_PLAYERS_IN_GAME_CLIENT / 2)) {
             ctx.font = fontSizeScore;
             ctx.fillStyle = (player.no % 2 == 0) ? "green" : "red";
-            const xPos = (player.no % 2 == 0) ? 630 : 10;
+            const xPos = (player.no % 2 == 0) ? STADIUM_W_CLIENT - 10 : 10;
             const yPos = 40;
             ctx.fillText(player.score.toString(), xPos, yPos);
         }
@@ -221,10 +237,35 @@ function userInterface() {
         if (player.name)
             ctx.font = fontSizeName;
         ctx.fillStyle = getPlayerColor(player.no);
-        const xPos = (player.no % 2 == 0) ? 580 : 60;
+        const xPos = (player.no % 2 == 0) ? STADIUM_W_CLIENT - 60 : 60;
         const yPos = 25 + 25 * Math.floor((player.no - 1) / 2);
         const nameText = (player.name) ? player.name : "";
         ctx.fillText(nameText, xPos, yPos);
+        // draw player hint
+        if (id === selfID && drawPlayerHint) {
+            ctx.font = "48px Arial";
+            ;
+            ctx.fillStyle = getPlayerColor(player.no);
+            let teamNo = player.no % 2;
+            if (teamNo == 0)
+                teamNo = 2;
+            const xPos = (teamNo == 1) ?
+                player.pos.x - PAD_LENGTH_CLIENT - 20 :
+                player.pos.x + PAD_LENGTH_CLIENT + 20;
+            const yPos = player.pos.y + 15;
+            const hintText = (teamNo == 1) ? `▶` : `◀`;
+            ctx.fillText(hintText, xPos, yPos);
+            canvas.addEventListener('keydown', function (e) {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        drawPlayerHint = false;
+                        break;
+                    case ' ':
+                        // re-enable player hint?
+                        break;
+                }
+            });
+        }
     }
 }
 function createFootball(footballParams) {
@@ -232,17 +273,17 @@ function createFootball(footballParams) {
     const ballType = footballParams.type;
     switch (ballType) {
         case BALL_TYPE.BALL:
-            ball = new Ball(320, 270, footballParams.r, footballParams.m);
+            ball = new Ball(STADIUM_W_CLIENT / 2, STADIUM_H_CLIENT / 2 + 60, footballParams.r, footballParams.m);
             ball.color = "blue";
             ball.setImages([BALL_IMG]);
-            ball.pos.set(320, 270);
+            ball.pos.set(STADIUM_W_CLIENT / 2, STADIUM_H_CLIENT / 2 + 60);
             ball.vel.set(0, 0);
             return ball;
         case BALL_TYPE.CAPSULE:
-            ball = new Capsule(320 - BALL_CAPSULE_LENGTH_CLIENT / 2, 270, 320 + BALL_CAPSULE_LENGTH_CLIENT / 2, 270, footballParams.r, footballParams.r, footballParams.m);
+            ball = new Capsule(STADIUM_W_CLIENT / 2 - BALL_CAPSULE_LENGTH_CLIENT / 2, STADIUM_H_CLIENT / 2 + 60, STADIUM_W_CLIENT / 2 + BALL_CAPSULE_LENGTH_CLIENT / 2, STADIUM_H_CLIENT / 2 + 60, footballParams.r, footballParams.r, footballParams.m);
             ball.color = "blue";
             ball.setImages(BALL_CAPSULE_IMGS);
-            ball.pos.set(320, 270);
+            ball.pos.set(STADIUM_W_CLIENT / 2, STADIUM_H_CLIENT / 2 + 60);
             ball.vel.set(0, 0);
             return ball;
     }

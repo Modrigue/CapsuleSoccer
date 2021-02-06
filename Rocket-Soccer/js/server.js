@@ -4,6 +4,8 @@ const PORT = DEPLOY ? (process.env.PORT || 13000) : 5500;
 // game parameters
 const NB_PLAYERS_IN_GAME = 2;
 const NB_POINTS_MATCH = 10;
+const STADIUM_W = 800; // min: 440
+const STADIUM_H = 480; // min: 300
 // pad paremeters
 const PAD_ANGLE_FRICTION = 0.08;
 const PAD_ANGLE_KEY_FORCE = 0.07;
@@ -883,7 +885,8 @@ function connected(socket) {
     const room = 1;
     const nbPlayersReady = getNbPlayersReadyInRoom(room);
     io.emit('newConnection', { nbPlayersReady: nbPlayersReady,
-        nbPlayersInGame: NB_PLAYERS_IN_GAME, nbPointsMatch: NB_POINTS_MATCH });
+        nbPlayersInGame: NB_PLAYERS_IN_GAME, nbPointsMatch: NB_POINTS_MATCH,
+        stadiumW: STADIUM_W, stadiumH: STADIUM_H });
     // disconnection
     socket.on('disconnect', function () {
         if (serverBalls.has(socket.id)) {
@@ -959,13 +962,14 @@ function connected(socket) {
         console.log(`New player no.: ${clientNo}, room no.: ${room}`);
         const yPadDiff = (NB_PLAYERS_IN_GAME > 2) ? 80 : 0;
         // initialize player pad
-        let newPlayer = new Player_S(320 + PAD_LENGTH / 2, 270 - yPadDiff / 2, 320 - PAD_LENGTH / 2, 270 - yPadDiff / 2, PAD_WIDTH, 0, PAD_MASS);
+        let newPlayer = new Player_S(STADIUM_W / 2 + PAD_LENGTH / 2, STADIUM_H / 2 + 60 - yPadDiff / 2, STADIUM_W / 2 - PAD_LENGTH / 2, STADIUM_H / 2 + 60 - yPadDiff / 2, PAD_WIDTH, 0, PAD_MASS);
         newPlayer.no = clientNoInRoom;
         newPlayer.layer = room;
         newPlayer.name = data.name;
         serverBalls.set(socket.id, newPlayer);
         initPlayerPosition(socket.id);
-        playerReg.set(socket.id, { id: socket.id, x: newPlayer.pos.x, y: newPlayer.pos.y, roomNo: room, no: clientNoInRoom });
+        playerReg.set(socket.id, { id: socket.id, x: newPlayer.pos.x, y: newPlayer.pos.y,
+            roomNo: room, no: clientNoInRoom, angle: newPlayer.angle });
         // initialize game if all players present
         if (clientNoInRoom == NB_PLAYERS_IN_GAME) {
             // stadium
@@ -973,7 +977,7 @@ function connected(socket) {
                 newRandomStadium(room);
             // ball
             if (!football_S.has(room)) {
-                let newBall = new Ball_S(320, 270, BALL_RADIUS, BALL_MASS);
+                let newBall = new Ball_S(STADIUM_W / 2, STADIUM_H / 2 + 60, BALL_RADIUS, BALL_MASS);
                 newBall.layer = room;
                 football_S.set(room, newBall);
                 io.to(room).emit('updateFootball', { x: newBall.pos.x, y: newBall.pos.y,
@@ -1082,7 +1086,7 @@ function serverLoop() {
 }
 function gameLogic_S(room) {
     let footballCur = football_S.get(room);
-    if (footballCur.pos.x < 45 || footballCur.pos.x > 595)
+    if (footballCur.pos.x < 45 || footballCur.pos.x > STADIUM_W - 45)
         scoring(room);
     for (let [id, player] of serverBalls)
         if (player.score === NB_POINTS_MATCH && player.layer === room)
@@ -1111,7 +1115,7 @@ function scoring(room) {
             }
         }
     }
-    if (footballCur.pos.x > 595) {
+    if (footballCur.pos.x > STADIUM_W - 45) {
         for (let [id, player] of serverBalls) {
             if (player.no === 1 && player.layer == room) {
                 player.score++;
@@ -1176,10 +1180,10 @@ function initPlayerPosition(id) {
         Math.ceil(NB_PLAYERS_IN_GAME / 2) :
         Math.floor(NB_PLAYERS_IN_GAME / 2);
     const noPlayerInTeam = Math.floor((serverBalls.get(id).no - 1) / 2) + 1;
-    const xStart = (teamNo == 1) ? 115 : 525;
+    const xStart = (teamNo == 1) ? 115 : STADIUM_W - 115;
     let yMin = (nbPlayersInTeam % 2 == 0) ?
-        270 - (Math.floor(nbPlayersInTeam / 2) - 0.5) * yPadDiff :
-        270 - Math.floor(nbPlayersInTeam / 2) * yPadDiff;
+        STADIUM_H / 2 + 60 - (Math.floor(nbPlayersInTeam / 2) - 0.5) * yPadDiff :
+        STADIUM_H / 2 + 60 - Math.floor(nbPlayersInTeam / 2) * yPadDiff;
     const yStart = yMin + (noPlayerInTeam - 1) * yPadDiff;
     //console.log('PLAYER ', (<Player_S>serverBalls.get(id)).no, noPlayerInTeam, yMin, xStart, yStart);
     const orientation = (teamNo == 1) ? Math.PI : 0;
@@ -1187,113 +1191,117 @@ function initPlayerPosition(id) {
 }
 function newRandomStadium(room) {
     let newStadium = new Array();
-    // WARNING: WALLS MUST NOT INTERSECT WITH EACH OTHERS!!
+    // WARNING: WALLS MUST NOT SHARE COMMON PIXELS WITH EACH OTHERS!!
     const stadiumTypeNumber = 1 + Math.floor(4 * Math.random());
     switch (stadiumTypeNumber) {
         case 2:
             // Top walls
-            newStadium.push(new Wall_S(60, 80, 280, 80));
-            newStadium.push(new Wall_S(360, 80, 580, 80));
-            newStadium.push(new WallArc_S(320, 80, 40, 0, Math.PI));
-            newStadium.push(new Wall_S(60, 80, 60, 140));
-            newStadium.push(new Wall_S(580, 80, 580, 140));
+            newStadium.push(new Wall_S(60, 80, STADIUM_W / 2 - 39, 80));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 41, 80, STADIUM_W - 60, 80));
+            newStadium.push(new WallArc_S(STADIUM_W / 2, 80, 40, 0, Math.PI));
+            newStadium.push(new Wall_S(60, 80, 60, STADIUM_H / 2 + 60 - 131));
+            newStadium.push(new Wall_S(STADIUM_W - 60, 80, STADIUM_W - 60, STADIUM_H / 2 + 60 - 131));
             // bottom walls
-            newStadium.push(new Wall_S(60, 460, 280, 460));
-            newStadium.push(new Wall_S(360, 460, 580, 460));
-            newStadium.push(new WallArc_S(320, 460, 40, Math.PI, 2 * Math.PI));
-            newStadium.push(new Wall_S(60, 460, 60, 400));
-            newStadium.push(new Wall_S(580, 460, 580, 400));
+            newStadium.push(new Wall_S(60, STADIUM_H + 60 - 20, STADIUM_W / 2 - 39, STADIUM_H + 60 - 20));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 41, STADIUM_H + 60 - 20, STADIUM_W - 60, STADIUM_H + 60 - 20));
+            newStadium.push(new WallArc_S(STADIUM_W / 2, STADIUM_H + 60 - 20, 40, Math.PI, 2 * Math.PI));
+            newStadium.push(new Wall_S(60, STADIUM_H + 60 - 20, 60, STADIUM_H / 2 + 60 + 131));
+            newStadium.push(new Wall_S(STADIUM_W - 60, STADIUM_H + 60 - 20, STADIUM_W - 60, STADIUM_H / 2 + 60 + 131));
             // left goal
-            newStadium.push(new WallArc_S(0, 140, 60, 0, Math.PI / 2));
-            newStadium.push(new WallArc_S(0, 400, 60, 3 / 2 * Math.PI, 2 * Math.PI));
+            newStadium.push(new WallArc_S(0, STADIUM_H / 2 + 60 - 130, 60, 0, Math.PI / 2));
+            newStadium.push(new WallArc_S(0, STADIUM_H / 2 + 60 + 130, 60, 3 / 2 * Math.PI, 2 * Math.PI));
             // right goal
-            newStadium.push(new WallArc_S(640, 140, 60, Math.PI / 2, Math.PI));
-            newStadium.push(new WallArc_S(640, 400, 60, Math.PI, 3 / 2 * Math.PI));
+            newStadium.push(new WallArc_S(STADIUM_W, STADIUM_H / 2 + 60 - 130, 60, Math.PI / 2, Math.PI));
+            newStadium.push(new WallArc_S(STADIUM_W, STADIUM_H / 2 + 60 + 130, 60, Math.PI, 3 / 2 * Math.PI));
             // goals borders
-            newStadium.push(new Wall_S(0, 340, 0, 200));
-            newStadium.push(new Wall_S(640, 340, 640, 200));
+            newStadium.push(new Wall_S(0, STADIUM_H / 2 + 60 - 70, 0, STADIUM_H / 2 + 60 + 70));
+            newStadium.push(new Wall_S(STADIUM_W, STADIUM_H / 2 + 60 - 70, STADIUM_W, STADIUM_H / 2 + 60 + 70));
             break;
         case 3:
             // Top walls
-            newStadium.push(new Wall_S(0, 80, 100, 80));
+            newStadium.push(new Wall_S(0, 80, 99, 80));
             newStadium.push(new Wall_S(100, 80, 140, 120));
-            newStadium.push(new Wall_S(140, 120, 240, 120));
-            newStadium.push(new Wall_S(240, 120, 280, 80));
-            newStadium.push(new Wall_S(280, 80, 360, 80));
-            newStadium.push(new Wall_S(360, 80, 400, 120));
-            newStadium.push(new Wall_S(400, 120, 500, 120));
-            newStadium.push(new Wall_S(500, 120, 540, 80));
-            newStadium.push(new Wall_S(540, 80, 640, 80));
+            newStadium.push(new Wall_S(141, 120, STADIUM_W / 2 - 81, 120));
+            newStadium.push(new Wall_S(STADIUM_W / 2 - 80, 120, STADIUM_W / 2 - 40, 80));
+            newStadium.push(new Wall_S(STADIUM_W / 2 - 39, 80, STADIUM_W / 2 + 39, 80));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 40, 80, STADIUM_W / 2 + 80, 120));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 81, 120, STADIUM_W - 141, 120));
+            newStadium.push(new Wall_S(STADIUM_W - 140, 120, STADIUM_W - 100, 80));
+            newStadium.push(new Wall_S(STADIUM_W - 99, 80, STADIUM_W, 80));
             // Bottom walls
-            newStadium.push(new Wall_S(0, 460, 100, 460));
-            newStadium.push(new Wall_S(100, 460, 140, 420));
-            newStadium.push(new Wall_S(140, 420, 240, 420));
-            newStadium.push(new Wall_S(240, 420, 280, 460));
-            newStadium.push(new Wall_S(280, 460, 360, 460));
-            newStadium.push(new Wall_S(360, 460, 400, 420));
-            newStadium.push(new Wall_S(400, 420, 500, 420));
-            newStadium.push(new Wall_S(500, 420, 540, 460));
-            newStadium.push(new Wall_S(540, 460, 640, 460));
+            newStadium.push(new Wall_S(0, STADIUM_H + 60 - 20, 99, STADIUM_H + 60 - 20));
+            newStadium.push(new Wall_S(100, STADIUM_H + 60 - 20, 140, STADIUM_H + 60 - 60));
+            newStadium.push(new Wall_S(141, STADIUM_H + 60 - 60, STADIUM_W / 2 - 81, STADIUM_H + 60 - 60));
+            newStadium.push(new Wall_S(STADIUM_W / 2 - 80, STADIUM_H + 60 - 60, STADIUM_W / 2 - 40, STADIUM_H + 60 - 20));
+            newStadium.push(new Wall_S(STADIUM_W / 2 - 39, STADIUM_H + 60 - 20, STADIUM_W / 2 + 39, STADIUM_H + 60 - 20));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 40, STADIUM_H + 60 - 20, STADIUM_W / 2 + 80, STADIUM_H + 60 - 60));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 81, STADIUM_H + 60 - 60, STADIUM_W - 141, STADIUM_H + 60 - 60));
+            newStadium.push(new Wall_S(STADIUM_W - 140, STADIUM_H + 60 - 60, STADIUM_W - 100, STADIUM_H + 60 - 20));
+            newStadium.push(new Wall_S(STADIUM_W - 99, STADIUM_H + 60 - 20, STADIUM_W, STADIUM_H + 60 - 20));
             // left walls
             newStadium.push(new Wall_S(0, 200, 70, 260));
-            newStadium.push(new Wall_S(70, 260, 70, 280));
-            newStadium.push(new Wall_S(0, 340, 70, 280));
+            newStadium.push(new Wall_S(70, 261, 70, STADIUM_H + 60 - 191));
+            newStadium.push(new Wall_S(0, STADIUM_H + 60 - 120, 70, STADIUM_H + 60 - 190));
             // right walls
-            newStadium.push(new Wall_S(640, 200, 570, 260));
-            newStadium.push(new Wall_S(570, 260, 570, 280));
-            newStadium.push(new Wall_S(640, 340, 570, 280));
+            newStadium.push(new Wall_S(STADIUM_W, 200, STADIUM_W - 70, 260));
+            newStadium.push(new Wall_S(STADIUM_W - 70, 261, STADIUM_W - 70, STADIUM_H + 60 - 191));
+            newStadium.push(new Wall_S(STADIUM_W, STADIUM_H + 60 - 120, STADIUM_W - 70, STADIUM_H + 60 - 190));
             // goals borders
             newStadium.push(new Wall_S(0, 80, 0, 200));
-            newStadium.push(new Wall_S(0, 460, 0, 340));
-            newStadium.push(new Wall_S(640, 80, 640, 200));
-            newStadium.push(new Wall_S(640, 460, 640, 340));
+            newStadium.push(new Wall_S(0, STADIUM_H + 60 - 20, 0, STADIUM_H + 60 - 120));
+            newStadium.push(new Wall_S(STADIUM_W, 80, STADIUM_W, 200));
+            newStadium.push(new Wall_S(STADIUM_W, STADIUM_H + 60 - 20, STADIUM_W, STADIUM_H + 60 - 120));
             break;
         case 4:
             // Top walls
-            newStadium.push(new Wall_S(0, 80, 100, 80));
+            newStadium.push(new Wall_S(0, 80, 99, 80));
             newStadium.push(new WallArc_S(140, 80, 40, Math.PI / 2, Math.PI));
-            newStadium.push(new Wall_S(140, 120, 240, 120));
-            newStadium.push(new WallArc_S(240, 80, 40, 0, Math.PI / 2));
-            newStadium.push(new Wall_S(280, 80, 360, 80));
-            newStadium.push(new WallArc_S(400, 80, 40, Math.PI / 2, Math.PI));
-            newStadium.push(new Wall_S(400, 120, 500, 120));
-            newStadium.push(new WallArc_S(500, 80, 40, 0, Math.PI / 2));
-            newStadium.push(new Wall_S(540, 80, 640, 80));
+            newStadium.push(new Wall_S(141, 120, STADIUM_W / 2 - 81, 120));
+            newStadium.push(new WallArc_S(STADIUM_W / 2 - 80, 80, 40, 0, Math.PI / 2));
+            newStadium.push(new Wall_S(STADIUM_W / 2 - 39, 80, STADIUM_W / 2 + 39, 80));
+            newStadium.push(new WallArc_S(STADIUM_W / 2 + 80, 80, 40, Math.PI / 2, Math.PI));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 81, 120, STADIUM_W - 141, 120));
+            newStadium.push(new WallArc_S(STADIUM_W - 140, 80, 40, 0, Math.PI / 2));
+            newStadium.push(new Wall_S(STADIUM_W - 99, 80, STADIUM_W, 80));
             // Bottom walls
-            newStadium.push(new Wall_S(0, 460, 100, 460));
-            newStadium.push(new WallArc_S(140, 460, 40, Math.PI, 3 / 2 * Math.PI));
-            newStadium.push(new Wall_S(140, 420, 240, 420));
-            newStadium.push(new WallArc_S(240, 460, 40, 3 / 2 * Math.PI, 2 * Math.PI));
-            newStadium.push(new Wall_S(280, 460, 360, 460));
-            newStadium.push(new WallArc_S(400, 460, 40, Math.PI, 3 / 2 * Math.PI));
-            newStadium.push(new Wall_S(400, 420, 500, 420));
-            newStadium.push(new WallArc_S(500, 460, 40, 3 / 2 * Math.PI, 2 * Math.PI));
-            newStadium.push(new Wall_S(540, 460, 640, 460));
+            newStadium.push(new Wall_S(0, STADIUM_H + 60 - 20, 99, STADIUM_H + 60 - 20));
+            newStadium.push(new WallArc_S(140, STADIUM_H + 60 - 20, 40, Math.PI, 3 / 2 * Math.PI));
+            newStadium.push(new Wall_S(141, STADIUM_H + 60 - 60, STADIUM_W / 2 - 79, STADIUM_H + 60 - 60));
+            newStadium.push(new WallArc_S(STADIUM_W / 2 - 80, STADIUM_H + 60 - 20, 40, 3 / 2 * Math.PI, 2 * Math.PI));
+            newStadium.push(new Wall_S(STADIUM_W / 2 - 39, STADIUM_H + 60 - 20, STADIUM_W / 2 + 39, STADIUM_H + 60 - 20));
+            newStadium.push(new WallArc_S(STADIUM_W / 2 + 80, STADIUM_H + 60 - 20, 40, Math.PI, 3 / 2 * Math.PI));
+            newStadium.push(new Wall_S(STADIUM_W / 2 + 81, STADIUM_H + 60 - 60, STADIUM_W - 141, STADIUM_H + 60 - 60));
+            newStadium.push(new WallArc_S(STADIUM_W - 140, STADIUM_H + 60 - 20, 40, 3 / 2 * Math.PI, 2 * Math.PI));
+            newStadium.push(new Wall_S(STADIUM_W - 99, STADIUM_H + 60 - 20, STADIUM_W, STADIUM_H + 60 - 20));
             // left wall
-            newStadium.push(new WallArc_S(0, 270, 70, 3 / 2 * Math.PI, 5 / 2 * Math.PI));
+            newStadium.push(new WallArc_S(0, STADIUM_H / 2 + 60, STADIUM_H / 2 - 140, 3 / 2 * Math.PI, 5 / 2 * Math.PI));
             // right wall
-            newStadium.push(new WallArc_S(640, 270, 70, Math.PI / 2, 3 / 2 * Math.PI));
+            newStadium.push(new WallArc_S(STADIUM_W, STADIUM_H / 2 + 60, STADIUM_H / 2 - 140, 1 / 2 * Math.PI, 3 / 2 * Math.PI));
+            //newStadium.push(new WallArc_S(STADIUM_W, 270, 70, Math.PI, 3/2*Math.PI));
+            //newStadium.push(new Wall_S(STADIUM_W - 70, 270, STADIUM_W - 70, STADIUM_H+60 - 210));
+            //newStadium.push(new WallArc_S(STADIUM_W, STADIUM_H+60 - 210, 70, 1/2*Math.PI, Math.PI));
             // goals borders
             newStadium.push(new Wall_S(0, 80, 0, 200));
-            newStadium.push(new Wall_S(0, 460, 0, 340));
-            newStadium.push(new Wall_S(640, 80, 640, 200));
-            newStadium.push(new Wall_S(640, 460, 640, 340));
+            newStadium.push(new Wall_S(0, STADIUM_H + 60 - 20, 0, STADIUM_H + 60 - 140));
+            newStadium.push(new Wall_S(STADIUM_W, 80, STADIUM_W, 200));
+            newStadium.push(new Wall_S(STADIUM_W, STADIUM_H + 60 - 20, STADIUM_W, STADIUM_H + 60 - 140));
             break;
         default:
-            // Top / bottom walls
-            newStadium.push(new Wall_S(60, 80, 580, 80));
-            newStadium.push(new Wall_S(60, 460, 580, 460));
-            newStadium.push(new Wall_S(60, 80, 60, 180));
-            newStadium.push(new Wall_S(60, 460, 60, 360));
-            newStadium.push(new Wall_S(580, 80, 580, 180));
-            newStadium.push(new Wall_S(580, 460, 580, 360));
-            newStadium.push(new Wall_S(50, 360, 10, 360));
-            newStadium.push(new Wall_S(10, 180, 50, 180));
-            newStadium.push(new Wall_S(590, 360, 630, 360));
-            newStadium.push(new Wall_S(630, 180, 590, 180));
+            // Top walls
+            newStadium.push(new Wall_S(60, 80, STADIUM_W - 60, 80));
+            newStadium.push(new Wall_S(60, 80, 60, STADIUM_H / 2 + 60 - 90));
+            newStadium.push(new Wall_S(STADIUM_W - 60, 80, STADIUM_W - 60, STADIUM_H / 2 + 60 - 90));
+            // Bottom walls
+            newStadium.push(new Wall_S(60, STADIUM_H + 60 - 20, STADIUM_W - 60, STADIUM_H + 60 - 20));
+            newStadium.push(new Wall_S(60, STADIUM_H + 60 - 20, 60, STADIUM_H / 2 + 60 + 90));
+            newStadium.push(new Wall_S(STADIUM_W - 60, STADIUM_H + 60 - 20, STADIUM_W - 60, STADIUM_H / 2 + 60 + 90));
             // goals borders
-            newStadium.push(new Wall_S(0, 360, 0, 180));
-            newStadium.push(new Wall_S(640, 360, 640, 180));
+            newStadium.push(new Wall_S(50, STADIUM_H / 2 + 60 + 90, 10, STADIUM_H / 2 + 60 + 90));
+            newStadium.push(new Wall_S(10, STADIUM_H / 2 + 60 - 90, 50, STADIUM_H / 2 + 60 - 90));
+            newStadium.push(new Wall_S(STADIUM_W - 50, STADIUM_H / 2 + 60 + 90, STADIUM_W - 10, STADIUM_H / 2 + 60 + 90));
+            newStadium.push(new Wall_S(STADIUM_W - 50, STADIUM_H / 2 + 60 - 90, STADIUM_W - 10, STADIUM_H / 2 + 60 - 90));
+            newStadium.push(new Wall_S(0, STADIUM_H / 2 + 60 + 90, 0, STADIUM_H / 2 + 60 - 90));
+            newStadium.push(new Wall_S(STADIUM_W, STADIUM_H / 2 + 60 + 90, STADIUM_W, STADIUM_H / 2 + 60 - 90));
             break;
     }
     stadium_S.set(room, newStadium);
@@ -1338,14 +1346,10 @@ function newRandomBall() {
     let ball;
     switch (ballType) {
         case BALL_TYPE_S.BALL:
-            ball = new Ball_S(320, 270, BALL_RADIUS, BALL_MASS);
-            ball.pos.set(320, 270);
-            ball.vel.set(0, 0);
+            ball = new Ball_S(STADIUM_W / 2, STADIUM_H / 2 + 60, BALL_RADIUS, BALL_MASS);
             return ball;
         case BALL_TYPE_S.CAPSULE:
-            ball = new Capsule_S(320 - BALL_CAPSULE_LENGTH / 2, 270, 320 + BALL_CAPSULE_LENGTH / 2, 270, BALL_RADIUS, BALL_RADIUS, BALL_MASS);
-            ball.pos.set(320, 270);
-            ball.vel.set(0, 0);
+            ball = new Capsule_S(STADIUM_W / 2 - BALL_CAPSULE_LENGTH / 2, STADIUM_H / 2 + 60, STADIUM_W / 2 + BALL_CAPSULE_LENGTH / 2, STADIUM_H / 2 + 60, BALL_RADIUS, BALL_RADIUS, BALL_MASS);
             return ball;
     }
 }
@@ -1367,8 +1371,8 @@ function newRandomObstacles() {
     let newObstacles = [];
     // parameters
     const r = 15;
-    const dxMax = 180;
-    const dyMax = 100;
+    const dxMax = 0.28 * STADIUM_W;
+    const dyMax = 0.23 * STADIUM_H;
     // choose nb. of obstacles
     const nbObstaclesPercent = Math.floor(100 * Math.random());
     let obstaclesAppear = [false, false]; // no obstacles
@@ -1380,10 +1384,10 @@ function newRandomObstacles() {
         const dx = Math.round(2 * dxMax * Math.random() - dxMax);
         const dy = Math.round(2 * dyMax * Math.random() - dyMax);
         const distToCenter = distance(dx, 0, dy, 0);
-        let x1 = (appear && distToCenter >= 50) ? 320 + dx : -100;
-        let y1 = (appear && distToCenter >= 50) ? 270 + dy : -100;
-        let x2 = (appear && distToCenter >= 50) ? 320 - dx : -100;
-        let y2 = (appear && distToCenter >= 50) ? 270 - dy : -100;
+        let x1 = (appear && distToCenter >= 50) ? STADIUM_W / 2 + dx : -100;
+        let y1 = (appear && distToCenter >= 50) ? STADIUM_H / 2 + 60 + dy : -100;
+        let x2 = (appear && distToCenter >= 50) ? STADIUM_W / 2 - dx : -100;
+        let y2 = (appear && distToCenter >= 50) ? STADIUM_H / 2 + 60 - dy : -100;
         // add new obstacles pair
         newObstacles.push(new Star6_S(x1, y1, r, 0), new Star6_S(x2, y2, r, 0));
     }

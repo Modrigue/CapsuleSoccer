@@ -2,7 +2,7 @@
 //import { canvas, socket } from "./client.js";
 let justPressed = false;
 //Event listeners for the arrow keys
-function userInput(obj) {
+function userInput(obj, canvas) {
     canvas.addEventListener('keydown', function (e) {
         switch (e.key) {
             case 'ArrowLeft':
