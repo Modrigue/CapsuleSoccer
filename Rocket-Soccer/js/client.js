@@ -39,6 +39,7 @@ let stadium = new Array();
 let obstacles = new Array();
 let room = -1;
 let nbPlayersReadyInRoom = 0;
+let drawPlayerHint = true;
 socket.on('connect', () => {
     selfID = socket.id;
 });
@@ -62,6 +63,7 @@ socket.on('newConnection', (matchParams) => {
 socket.on('updatePlayersReady', (nbPlayersReady) => {
     nbPlayersReadyInRoom = nbPlayersReady;
     updateWelcomeGUI();
+    drawPlayerHint = true;
 });
 function updateWelcomeGUI() {
     const teamNo = (nbPlayersReadyInRoom % 2) + 1;
@@ -135,6 +137,7 @@ socket.on('newStadium', (stadiumParams) => {
                 break;
         }
     }
+    drawPlayerHint = true;
 });
 socket.on('updateFootball', (footballParams) => {
     //if (footballPos == null)
@@ -237,6 +240,31 @@ function userInterface() {
         const yPos = 25 + 25 * Math.floor((player.no - 1) / 2);
         const nameText = (player.name) ? player.name : "";
         ctx.fillText(nameText, xPos, yPos);
+        // draw player hint
+        if (id === selfID && drawPlayerHint) {
+            ctx.font = "48px Arial";
+            ;
+            ctx.fillStyle = getPlayerColor(player.no);
+            let teamNo = player.no % 2;
+            if (teamNo == 0)
+                teamNo = 2;
+            const xPos = (teamNo == 1) ?
+                player.pos.x - PAD_LENGTH_CLIENT - 20 :
+                player.pos.x + PAD_LENGTH_CLIENT + 20;
+            const yPos = player.pos.y + 15;
+            const hintText = (teamNo == 1) ? `▶` : `◀`;
+            ctx.fillText(hintText, xPos, yPos);
+            canvas.addEventListener('keydown', function (e) {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        drawPlayerHint = false;
+                        break;
+                    case ' ':
+                        // re-enable player hint?
+                        break;
+                }
+            });
+        }
     }
 }
 function createFootball(footballParams) {
