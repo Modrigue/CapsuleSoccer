@@ -4,6 +4,7 @@ let NB_PLAYERS_IN_GAME_CLIENT = 2;
 let NB_POINTS_MATCH_CLIENT = 10;
 
 let STADIUM_W_CLIENT = 640;
+let STADIUM_H_CLIENT = 420;
 
 const PAD_LENGTH_CLIENT = 50;
 const BALL_CAPSULE_LENGTH_CLIENT = 60;
@@ -39,6 +40,7 @@ class Player extends Capsule
 // init game field
 let football: (Ball | Capsule);
 let footballInitialized: boolean = false;
+let marksInitialized: boolean = false;
 let clientBalls: Map<string, Player> = new Map<string, Player>();
 let selfID: string;
 let stadium: Array<Body> = new Array<Body>();
@@ -60,8 +62,10 @@ socket.on('newConnection', (matchParams: any) => {
     NB_POINTS_MATCH_CLIENT = matchParams.nbPointsMatch;
 
     STADIUM_W_CLIENT = matchParams.stadiumW;
+    STADIUM_H_CLIENT = matchParams.stadiumH;
 
     canvas.width = STADIUM_W_CLIENT;
+    canvas.height = STADIUM_H_CLIENT + 60; // includes header top
 
     buildStadiumMarks();
 
@@ -260,14 +264,19 @@ socket.on('updateScore', (scoreParams: any) => {
 
 function buildStadiumMarks()
 {
-    new LineMark(STADIUM_W_CLIENT/2, 81, STADIUM_W_CLIENT/2, 459, COLOR_MARK);
-    new CircleMark(STADIUM_W_CLIENT/2, 270, 60, COLOR_MARK);
+    if (marksInitialized)
+        return;
 
-    //new LineMark(60, 180, 60, 360, COLOR_MARK);
-    //new ArcMark(60, 270, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+    new LineMark(STADIUM_W_CLIENT/2, 81, STADIUM_W_CLIENT/2, STADIUM_H_CLIENT+60 - 21, COLOR_MARK);
+    new CircleMark(STADIUM_W_CLIENT/2, STADIUM_H_CLIENT/2 + 60, 60, COLOR_MARK);
 
-    //new LineMark(580, 180, 580, 360, COLOR_MARK);
-    //new ArcMark(580, 270, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+    //new LineMark(60, STADIUM_H_CLIENT/2 + 60 - 90, 60, STADIUM_H_CLIENT/2 + 60 + 90, COLOR_MARK);
+    //new ArcMark(60, STADIUM_H_CLIENT/2 + 60, 140, 1.5*Math.PI, 2.5*Math.PI, COLOR_MARK);
+
+    //new LineMark(STADIUM_W_CLIENT - 60,  STADIUM_H_CLIENT/2 + 60 - 90, STADIUM_W_CLIENT - 60,  STADIUM_H_CLIENT/2 + 60 + 90, COLOR_MARK);
+    //new ArcMark(STADIUM_W_CLIENT - 60, STADIUM_H_CLIENT/2 + 60, 140, 0.5*Math.PI, 1.5*Math.PI, COLOR_MARK);
+
+    marksInitialized = true;
 }
 
 requestAnimationFrame(renderOnly);
@@ -322,22 +331,22 @@ function createFootball(footballParams: any): (Ball | Capsule)
     switch(ballType)
     {
         case BALL_TYPE.BALL:
-            ball = new Ball(STADIUM_W_CLIENT/2, 270, footballParams.r, footballParams.m);
+            ball = new Ball(STADIUM_W_CLIENT/2, STADIUM_H_CLIENT/2 + 60, footballParams.r, footballParams.m);
             ball.color = "blue";
             ball.setImages([BALL_IMG]);
-            ball.pos.set(STADIUM_W_CLIENT/2, 270);
+            ball.pos.set(STADIUM_W_CLIENT/2, STADIUM_H_CLIENT/2 + 60);
             ball.vel.set(0, 0);
             return ball;
         
         case BALL_TYPE.CAPSULE:
             ball = new Capsule(
-                STADIUM_W_CLIENT/2 - BALL_CAPSULE_LENGTH_CLIENT/2, 270,
-                STADIUM_W_CLIENT/2 + BALL_CAPSULE_LENGTH_CLIENT/2, 270,
+                STADIUM_W_CLIENT/2 - BALL_CAPSULE_LENGTH_CLIENT/2, STADIUM_H_CLIENT/2 + 60,
+                STADIUM_W_CLIENT/2 + BALL_CAPSULE_LENGTH_CLIENT/2, STADIUM_H_CLIENT/2 + 60,
                 footballParams.r, footballParams.r, footballParams.m
             );
             ball.color = "blue";
             ball.setImages(BALL_CAPSULE_IMGS);
-            ball.pos.set(STADIUM_W_CLIENT/2, 270);
+            ball.pos.set(STADIUM_W_CLIENT/2, STADIUM_H_CLIENT/2 + 60);
             ball.vel.set(0, 0);
             return ball;
     }
