@@ -11,18 +11,14 @@ body
     background: black;
     outline: none;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */
+
+    box-sizing: border-box; /* hides scrollbars */
+    position: absolute;
 }
 
 #gameArea
 {
     display: none;
-}
-
-#winning
-{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: dodgerblue;
-    text-align: center;
 }
 
 button

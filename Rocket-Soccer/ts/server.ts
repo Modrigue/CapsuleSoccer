@@ -1500,6 +1500,8 @@ function gameOver(room: number)
 
 function scoring(room: number)
 {
+    // TODO: refactor
+
     let scorerId: string = "";
     let footballCur: Ball_S = <Ball_S>football_S.get(room);
 

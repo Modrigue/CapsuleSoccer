@@ -1102,6 +1102,7 @@ function gameOver(room) {
     }, 2000);
 }
 function scoring(room) {
+    // TODO: refactor
     let scorerId = "";
     let footballCur = football_S.get(room);
     console.log('Score in room', room);

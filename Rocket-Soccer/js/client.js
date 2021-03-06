@@ -19,7 +19,6 @@ else
     socket = io.connect(`http://localhost:${PORT}`);
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const form = document.getElementById('userForm');
 const gameAreaDiv = document.getElementById('gameArea');
 class Player extends Capsule {
     constructor() {
@@ -54,6 +53,7 @@ socket.on('newConnection', (matchParams) => {
     STADIUM_H_CLIENT = matchParams.stadiumH;
     canvas.width = STADIUM_W_CLIENT;
     canvas.height = STADIUM_H_CLIENT + 60; // includes header top
+    onResize();
     buildStadiumMarks();
     document.getElementById('playerWelcome').innerText =
         `Hi, enter your name and start to play`;
@@ -65,14 +65,6 @@ socket.on('updatePlayersReady', (nbPlayersReady) => {
     updateWelcomeGUI();
     drawPlayerHint = true;
 });
-function updateWelcomeGUI() {
-    const teamNo = (nbPlayersReadyInRoom % 2) + 1;
-    const teamColor = (teamNo == 1) ? "Red" : "Green";
-    document.getElementById('playerGameInfo').innerText =
-        `${nbPlayersReadyInRoom} / ${NB_PLAYERS_IN_GAME_CLIENT} players - Team ${teamColor} - Match in ${NB_POINTS_MATCH_CLIENT} points`;
-    const hasMaxNbPlayers = (nbPlayersReadyInRoom >= NB_PLAYERS_IN_GAME_CLIENT);
-    document.getElementById('buttonSubmit').disabled = hasMaxNbPlayers;
-}
 socket.on('updateConnections', (player) => {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     if (!clientBalls.has(player.id)) {
@@ -167,24 +159,9 @@ socket.on('scoring', (scorerId) => {
             player.score = 0;
     }
     else {
-        document.getElementById('winning').innerHTML = ``;
-        for (let [id, player] of clientBalls) {
-            if (id === scorerId) {
+        for (let [id, player] of clientBalls)
+            if (id === scorerId)
                 player.score++;
-                if (player.score === NB_POINTS_MATCH_CLIENT) {
-                    let winnerText = "";
-                    if (NB_PLAYERS_IN_GAME_CLIENT <= 2)
-                        winnerText = `The winner is ${player.name}!!! <br>LET'S PLAY AGAIN!`;
-                    else {
-                        let winningTeam = (player.no % 2);
-                        if (winningTeam == 0)
-                            winningTeam = 2;
-                        winnerText = `The winner is team ${winningTeam}!!! <br>LET'S PLAY AGAIN!`;
-                    }
-                    document.getElementById('winning').innerHTML = winnerText;
-                }
-            }
-        }
     }
 });
 socket.on('updateScore', (scoreParams) => {
@@ -266,6 +243,23 @@ function userInterface() {
                 }
             });
         }
+        // display winning text if winner
+        if (player.score === NB_POINTS_MATCH_CLIENT) {
+            let winText = "";
+            if (NB_PLAYERS_IN_GAME_CLIENT <= 2)
+                winText = `THE WINNER IS ${player.name}!!! <br>Let's play again`;
+            else {
+                let winningTeam = (player.no % 2);
+                if (winningTeam == 0)
+                    winningTeam = 2;
+                winText = `TEAM ${winningTeam} WINS!<br>Let's play again`;
+            }
+            ctx.font = "32px Arial";
+            ctx.textAlign = "center";
+            ctx.fillStyle = "dodgerblue";
+            ctx.fillText(winText, STADIUM_W_CLIENT / 2, STADIUM_H_CLIENT / 2);
+            console.log(winText);
+        }
     }
 }
 function createFootball(footballParams) {
@@ -295,24 +289,4 @@ function getPlayerColor(no) {
         colorIndex = nbColors;
     return COLORS_PLAYERS[colorIndex - 1];
 }
-form.onsubmit = function (e) {
-    e.preventDefault();
-    const name = document.getElementById('userName').value;
-    const roomCandidate = 1; //document.getElementById('userRoom').value;
-    socket.emit('clientName', { name: name, room: roomCandidate }, (response) => {
-        if (response.error) {
-            alert(response.error);
-            return true;
-        }
-        else {
-            // ok, enter room
-            room = roomCandidate;
-            form.style.display = 'none';
-            gameAreaDiv.style.display = 'block';
-            document.body.style.backgroundColor = "Black";
-            canvas.focus();
-            return false;
-        }
-    });
-};
 //# sourceMappingURL=client.js.map
