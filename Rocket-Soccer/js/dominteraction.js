@@ -64,4 +64,4 @@ function onResize() {
         canvas.style.height = `${hNew}px`;
     }
 }
-//# sourceMappingURL=dominteraction.js.map
+//# sourceMappingURL=domInteraction.js.map
